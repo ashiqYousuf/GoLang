@@ -4,27 +4,76 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
+	"sort"
 )
+
+// EXAMPLE 07
+// program to count the top 3 words in a file
+
+func main() {
+	scan := bufio.NewScanner(os.Stdin)
+	words := make(map[string]int)
+
+	scan.Split(bufio.ScanWords)
+
+	for scan.Scan() {
+		words[scan.Text()]++
+	}
+	fmt.Println("unique words in file:-", len(words))
+
+	type kv struct {
+		key string
+		val int
+	}
+
+	var ss []kv
+
+	for k, v := range words {
+		ss = append(ss, kv{k, v})
+	}
+
+	sort.Slice(ss, func(i int, j int) bool {
+		return ss[i].val > ss[j].val
+	})
+	for _, s := range ss[:3] {
+		fmt.Println(s.key, "appears", s.val, "times")
+	}
+}
+
+// EXAMPLE 06
+// i.ARRAYS ARE GETTING COPIED IN GO (Chunk of Memory Copied)
+// ii.SLICES STRINGS and MAPS are refrenced (even when passing to functions also), their descriptor is going to be copied but the memory chunk they are
+// pointing is getting refrenced (shared)
+
+// func main() {
+// 	a := [4]int{1, 2, 3, 4}
+// 	b := a
+
+// 	for i := 0; i < 4; i++ {
+// 		b[i] += 10
+// 	}
+// 	fmt.Println(a, len(a))
+// 	fmt.Println(b, len(b))
+// }
 
 // EXAMPLE 05
 
-func main() {
-	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "not enough args")
-		os.Exit(-1)
-	}
+// func main() {
+// 	if len(os.Args) < 3 {
+// 		fmt.Fprintln(os.Stderr, "not enough args")
+// 		os.Exit(-1)
+// 	}
 
-	old, new := os.Args[1], os.Args[2]
-	scan := bufio.NewScanner(os.Stdin)
+// 	old, new := os.Args[1], os.Args[2]
+// 	scan := bufio.NewScanner(os.Stdin)
 
-	for scan.Scan() {
-		s := strings.Split(scan.Text(), old)
-		t := strings.Join(s, new)
+// 	for scan.Scan() {
+// 		s := strings.Split(scan.Text(), old)
+// 		t := strings.Join(s, new)
 
-		fmt.Println(t)
-	}
-}
+// 		fmt.Println(t)
+// 	}
+// }
 
 // EXAMPLE 04
 // GO STRINGS ARE UTF-8 ENCODING OF UNICODE CHARACTERS
