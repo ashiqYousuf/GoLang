@@ -3,6 +3,28 @@ package main
 // EXAMPLE 08
 
 // func main() {
+// 	hashMap := make(map[string]int)
+// 	names := []string{"ashiq", "amir", "zahid", "yawer", "bilal", "owais", "muzi"}
+
+// 	for index, value := range names {
+// 		hashMap[value] = index*index + index
+// 	}
+// 	for key, value := range hashMap {
+// 		fmt.Printf("%v => %v\n", key, value)
+// 	}
+// }
+
+// func main() {
+// 	var arr [3]int
+// 	for index, value := range arr {
+// 		arr[index] = (value+1)*(value+2) + index*index
+// 	}
+// 	for index, value := range arr {
+// 		fmt.Println(index, value)
+// 	}
+// }
+
+// func main() {
 // 	n := 10
 
 // 	for i := 0; i < 4; i++ {
