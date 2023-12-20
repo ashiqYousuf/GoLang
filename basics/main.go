@@ -1,44 +1,52 @@
 package main
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-	"sort"
-)
+// EXAMPLE 08
+
+// func main() {
+// 	n := 10
+
+// 	for i := 0; i < 4; i++ {
+// 		for j := 0; j < 4; j++ {
+// 			fmt.Printf("(%v, %v)\n", i, j)
+// 		}
+// 	}
+
+// 	price, n := 4, n*10
+// 	fmt.Println(n, price)
+// }
 
 // EXAMPLE 07
 // program to count the top 3 words in a file
 
-func main() {
-	scan := bufio.NewScanner(os.Stdin)
-	words := make(map[string]int)
+// func main() {
+// 	scan := bufio.NewScanner(os.Stdin)
+// 	words := make(map[string]int)
 
-	scan.Split(bufio.ScanWords)
+// 	scan.Split(bufio.ScanWords)
 
-	for scan.Scan() {
-		words[scan.Text()]++
-	}
-	fmt.Println("unique words in file:-", len(words))
+// 	for scan.Scan() {
+// 		words[scan.Text()]++
+// 	}
+// 	fmt.Println("unique words in file:-", len(words))
 
-	type kv struct {
-		key string
-		val int
-	}
+// 	type kv struct {
+// 		key string
+// 		val int
+// 	}
 
-	var ss []kv
+// 	var ss []kv
 
-	for k, v := range words {
-		ss = append(ss, kv{k, v})
-	}
+// 	for k, v := range words {
+// 		ss = append(ss, kv{k, v})
+// 	}
 
-	sort.Slice(ss, func(i int, j int) bool {
-		return ss[i].val > ss[j].val
-	})
-	for _, s := range ss[:3] {
-		fmt.Println(s.key, "appears", s.val, "times")
-	}
-}
+// 	sort.Slice(ss, func(i int, j int) bool {
+// 		return ss[i].val > ss[j].val
+// 	})
+// 	for _, s := range ss[:3] {
+// 		fmt.Println(s.key, "appears", s.val, "times")
+// 	}
+// }
 
 // EXAMPLE 06
 // i.ARRAYS ARE GETTING COPIED IN GO (Chunk of Memory Copied)
