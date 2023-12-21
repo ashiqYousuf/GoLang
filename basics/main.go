@@ -1,5 +1,38 @@
 package main
 
+// EXAMPLE 12
+// Closures
+
+// func main() {
+// 	s := make([]func(), 4)
+
+// 	for i := 0; i < 4; i++ {
+// 		i2 := i // closure capture
+// 		s[i] = func() {
+// 			fmt.Printf("%d %p\n", i2, &i2)
+// 		}
+// 	}
+
+// 	for i := 0; i < 4; i++ {
+// 		s[i]()
+// 	}
+// }
+
+// func fib() func() int {
+// 	a, b := 0, 1
+
+// 	return func() int {
+// 		a, b = b, a+b
+// 		return b
+// 	}
+// }
+
+// func main() {
+// 	f, g := fib(), fib()
+// 	fmt.Println(f(), f(), f(), f(), f())
+// 	fmt.Println(g(), g(), g(), g(), g())
+// }
+
 // EXAMPLE 11
 // defer GOTCHAS
 
