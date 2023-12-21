@@ -1,5 +1,15 @@
 package main
 
+// EXAMPLE 11
+// defer GOTCHAS
+
+// func main() {
+// 	a := 10
+// 	defer fmt.Println(&a)
+// 	a = a * a * a * a
+// 	fmt.Println(&a)
+// }
+
 // EXAMPLE 10
 
 // func do(a1 *[2]int) {
