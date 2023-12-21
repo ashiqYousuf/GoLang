@@ -1,0 +1,3 @@
+this file name is a.txt
+this is b.txt file buddy
+here is your c.txt file content
