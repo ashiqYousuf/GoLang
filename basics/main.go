@@ -1,37 +1,77 @@
 package main
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
-)
+// EXAMPLE 10
+
+// func do(a1 *[2]int) {
+// 	a1[0] = 99
+// 	a1[1] = -100
+// }
+
+// func main() {
+// 	a := [2]int{1, 2}
+// 	fmt.Println(a)
+// 	do(&a)
+// 	fmt.Println(a)
+// }
+
+// func do(m1 *map[int]int) {
+// 	(*m1)[9] = 99
+// 	(*m1) = make(map[int]int)
+// }
+
+// func main() {
+// 	m := map[int]int{
+// 		1: 11,
+// 		2: 22,
+// 		3: 33,
+// 	}
+// 	fmt.Println(m)
+// 	do(&m)
+// 	fmt.Println(m)
+// }
+
+// func do(m1 map[int]int) {
+// 	m1[9] = 99
+// 	m1 = make(map[int]int)
+// }
+
+// func main() {
+// 	m := map[int]int{
+// 		1: 11,
+// 		2: 22,
+// 		3: 33,
+// 		4: 44,
+// 	}
+// 	fmt.Println(m)
+// 	do(m)
+// 	fmt.Println(m)
+// }
 
 // EXAMPLE 09
 // Line count, word count, char count for a file
 
-func main() {
-	for _, fname := range os.Args[1:] {
-		var lc, wc, cc int
-		file, err := os.Open(fname)
+// func main() {
+// 	for _, fname := range os.Args[1:] {
+// 		var lc, wc, cc int
+// 		file, err := os.Open(fname)
 
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			continue
-		}
+// 		if err != nil {
+// 			fmt.Fprintln(os.Stderr, err)
+// 			continue
+// 		}
 
-		scan := bufio.NewScanner(file)
+// 		scan := bufio.NewScanner(file)
 
-		for scan.Scan() {
-			s := scan.Text()
+// 		for scan.Scan() {
+// 			s := scan.Text()
 
-			wc += len(strings.Fields(s))
-			cc += len(s)
-			lc++
-		}
-		fmt.Printf("%5d %5d %5d %s\n", lc, wc, cc, fname)
-	}
-}
+// 			wc += len(strings.Fields(s))
+// 			cc += len(s)
+// 			lc++
+// 		}
+// 		fmt.Printf("%5d %5d %5d %s\n", lc, wc, cc, fname)
+// 	}
+// }
 
 // EXAMPLE 09
 // Concat file content to the stdout
