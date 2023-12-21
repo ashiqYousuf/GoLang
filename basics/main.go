@@ -1,5 +1,24 @@
 package main
 
+// EXAMPLE 13
+
+// func main() {
+// 	a := [3]int{1, 2, 3}
+
+// 	b := a[:2]
+// 	c := a[:2:2]
+// 	fmt.Printf("A:%d %d %p %v\n", len(a), cap(a), &a, a)
+// 	fmt.Printf("B:%d %d %p %v\n", len(b), cap(b), b, b)
+// 	fmt.Printf("C:%d %d %p %v\n", len(c), cap(c), c, c)
+
+// 	b = append(b, -10)
+// 	a[0] = -78
+// 	c = append(c, 99)
+// 	fmt.Printf("A:%d %d %p %v\n", len(a), cap(a), &a, a)
+// 	fmt.Printf("B:%d %d %p %v\n", len(b), cap(b), b, b)
+// 	fmt.Printf("C:%d %d %p %v\n", len(c), cap(c), c, c)
+// }
+
 // EXAMPLE 12
 // Closures
 
