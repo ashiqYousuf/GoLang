@@ -1,5 +1,122 @@
 package main
 
+/*
+We can't take address of a MAP entry.
+Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
+So you are always gonna see map of key to struct pointers
+Ex:- map[string]*Employee
+*/
+
+// EXAMPLE 19
+// JSON & Structs
+
+// type Response struct {
+// 	Page  int      `json:"page"`
+// 	Words []string `json:"words,omitempty"`
+// }
+
+// func main() {
+// 	r1 := Response{
+// 		1,
+// 		[]string{"solo", "mountains", "green-lands"},
+// 	}
+// 	j, err := json.Marshal(r1)
+// 	if err != nil {
+// 		fmt.Fprintln(os.Stderr, err)
+// 		os.Exit(-1)
+// 	}
+// 	fmt.Println(string(j))
+
+// 	var r2 Response
+
+// 	err = json.Unmarshal(j, &r2)
+// 	if err != nil {
+// 		fmt.Fprintln(os.Stderr, err)
+// 		os.Exit(-1)
+// 	}
+// 	fmt.Println(r1)
+// 	fmt.Println(r2)
+// }
+
+// EXAMPLE 18
+
+// type Album struct {
+// 	title string
+// }
+
+// func changeTitle(album *Album) {
+// 	album.title = "UNDEFINED"
+// }
+
+// func main() {
+// 	a1 := Album{"The Green Fields"}
+// 	fmt.Println(a1)
+// 	changeTitle(&a1)
+// 	fmt.Println(a1)
+// }
+
+// EXAMPLE 17
+
+// VALID
+// func main() {
+// 	m := map[int]*int{}
+// 	a := 10
+// 	m[10] = &a
+// 	fmt.Println(m[10])
+// }
+
+// EXAMPLE 16
+
+// func main() {
+// 	type Album struct {
+// 		title string
+// 	}
+
+// 	a := Album{"The Black Album"}
+// 	b := &Album{"The Green Album"}
+
+// 	fmt.Println(a)
+// 	fmt.Println(b)
+// 	a.title = "Black Changed Changed!"
+// 	b.title = "Hey Green Grass Changed"
+// 	fmt.Println(a)
+// 	fmt.Println(b)
+// }
+
+// EXAMPLE 15
+
+// type Employee struct {
+// 	Name  string
+// 	Email string
+// 	Age   int
+// 	Boss  *Employee
+// 	Hired time.Time
+// }
+
+// func main() {
+// 	emps := map[string]*Employee{}
+
+// 	emps["matt"] = &Employee{
+// 		Name:  "matt",
+// 		Email: "holiday@matt.com",
+// 		Age:   53,
+// 		Boss:  nil,
+// 		Hired: time.Now(),
+// 	}
+
+// 	emps["ashiq"] = &Employee{
+// 		Name:  "ashiq",
+// 		Email: "a@a.com",
+// 		Age:   24,
+// 		Boss:  emps["matt"],
+// 		Hired: time.Now(),
+// 	}
+
+// 	emps["ashiq"].Age += 10
+// 	fmt.Println(*emps["matt"])
+// 	fmt.Println(*emps["ashiq"])
+// }
+
 // EXAMPLE 14
 
 // var raw = `
