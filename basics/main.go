@@ -1,5 +1,57 @@
 package main
 
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"strings"
+
+	"golang.org/x/net/html"
+)
+
+// EXAMPLE 14
+
+var raw = `
+<html>
+<body>
+    <h1>First Heading</h1>
+    <p>First Paragraph</p>
+    <p>HTML images are defined with the img tag:</p>
+    <img src="abc.jpg" width="100" height="100">
+</body>
+</html>
+`
+
+func visit(node *html.Node, words *int, pics *int) {
+
+	fmt.Println("Node:-", node.Data)
+	if node.Type == html.TextNode {
+		(*words) += len(strings.Fields(node.Data))
+	} else if node.Type == html.ElementNode && node.Data == "img" {
+		(*pics)++
+	}
+	for c := node.FirstChild; c != nil; c = c.NextSibling {
+		visit(c, words, pics)
+	}
+}
+
+func countWordsAndImages(doc *html.Node) (int, int) {
+	var words, pics int
+	visit(doc, &words, &pics)
+	return words, pics
+}
+
+func main() {
+	doc, err := html.Parse(bytes.NewReader([]byte(raw)))
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parse failed: %s", err)
+		os.Exit(-1)
+	}
+	words, pics := countWordsAndImages(doc)
+	fmt.Printf("#words:%d & #pics:%d\n", words, pics)
+}
+
 // EXAMPLE 13
 
 // func main() {
