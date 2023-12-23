@@ -5,7 +5,109 @@ We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
 So you are always gonna see map of key to struct pointers
 Ex:- map[string]*Employee
+
+We can't take address of a MAP or SLICE entry, why?
+Because slices can get reallocated & we are then storing some stale address, in case of maps, maps keep on changing (rearranging themselves here and there i.e no order), so we too might keep
+pointing to some stale pointer variable.
+AVOID:- &slice[0] or %map[key]
+
+Do not capture refrence to a Loop variable
 */
+
+// EXAMPLE 21
+// Slices gotcha & fix like closures
+
+// func main() {
+// 	a := [3]int{1, 2, 3}
+// 	b := a[:1]
+// 	c := a[:2]
+
+// 	fmt.Printf("%d %d %v\n", len(a), cap(a), a)
+// 	fmt.Printf("%d %d %v\n", len(b), cap(b), b)
+// 	fmt.Printf("%d %d %v\n", len(c), cap(c), c)
+// 	fmt.Println("------------------------------------------------------")
+// 	c = append(c, 9)
+// 	fmt.Printf("%d %d %v\n", len(a), cap(a), a)
+// 	fmt.Printf("%d %d %v\n", len(b), cap(b), b)
+// 	fmt.Printf("%d %d %v\n", len(c), cap(c), c)
+
+// 	for i, _ := range a {
+// 		fmt.Printf("%d %p\n", a[i], &a[i])
+// 	}
+// 	fmt.Println("***************************************")
+// 	for i, _ := range b {
+// 		fmt.Printf("%d %p\n", b, &b[i])
+// 	}
+// 	fmt.Println("***************************************")
+// 	for i, _ := range c {
+// 		fmt.Printf("%d %p\n", c[i], &c[i])
+// 	}
+// }
+
+// func main() {
+// 	a := [][2]int{{1, 2}, {3, 4}, {5, 6}}
+// 	b := make([][]int, 0, 3)
+
+// 	for _, item := range a {
+// 		i := make([]int, len(item))
+// 		copy(i, item[:]) // make unique
+// 		b = append(b, i[:])
+// 	}
+// 	fmt.Println(a)
+// 	fmt.Println(b)
+// }
+
+// EXAMPLE 21
+
+// func fib() func() int {
+// 	a, b := 0, 1
+
+// 	return func() int {
+// 		a, b = b, a+b
+// 		return b
+// 	}
+// }
+
+// func main() {
+// 	f := fib()
+// 	g := fib()
+// 	fmt.Printf("%d %d %d\n", f(), f(), f())
+// 	fmt.Printf("%d %d %d\n", g(), g(), g())
+// 	fmt.Println(f(), g())
+// }
+
+// func print(arr []*int) {
+// 	for i, _ := range arr {
+// 		fmt.Printf("%d ", *arr[i])
+// 	}
+// 	fmt.Println()
+// }
+
+// func main() {
+// 	a := []int{1, 2, 3}
+// 	b := []*int{}
+
+// 	for _, val := range a {
+// 		b = append(b, &val)
+// 	}
+// 	fmt.Println(a)
+// 	fmt.Println(b)
+// 	print(b)
+// }
+
+// EXAMPLE 20
+
+// Stale slice pointer problem
+
+// func main() {
+// 	a := []int{1}
+// 	p := &a[0]
+// 	// *(p) = -90
+// 	fmt.Printf("%d %d %v %[3]p\n", len(a), cap(a), a)
+// 	a = append(a, 2)
+// 	*(p) = -90
+// 	fmt.Printf("%d %d %v %[3]p\n", len(a), cap(a), a)
+// }
 
 // EXAMPLE 19
 // JSON & Structs
