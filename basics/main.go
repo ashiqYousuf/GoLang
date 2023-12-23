@@ -1,5 +1,12 @@
 package main
 
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"text/template"
+)
+
 /*
 We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
@@ -13,6 +20,86 @@ AVOID:- &slice[0] or %map[key]
 
 Do not capture refrence to a Loop variable
 */
+
+// EXAMPLE 24
+// Client Server
+
+type todo struct {
+	UserID    int    `json:"userID"`
+	ID        int    `json:"id"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
+}
+
+var form = `
+<h1>Todo #{{.ID}}</h1>
+<div style="color:green">{{.UserID}}</div>
+<div>{{.Title}}</div>
+<h3>Completed {{.Completed}}</h3>
+`
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	const base = "https://jsonplaceholder.typicode.com/"
+	resp, err := http.Get(base + r.URL.Path)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	// body, err := io.ReadAll(resp.Body)
+
+	var item todo
+	// err = json.Unmarshal(body, &item)
+
+	if json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	tmp1 := template.New("mine")
+	tmp1.Parse(form)
+	tmp1.Execute(w, item)
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// EXAMPLE 23
+// Http Server
+
+// func handler(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Println("Body: ", r.Body)
+// 	fmt.Println("Header: ", r.Header)
+// 	fmt.Println("Form: ", r.Form)
+// 	fmt.Println("Method: ", r.Method)
+// 	fmt.Println("Host", r.Host)
+// 	fmt.Println("Query", r.URL.Query())
+// 	fmt.Println("Raw Query", r.URL.RawQuery)
+// 	fmt.Fprintf(w, "Hello, World from %s\n", r.URL.Path)
+// }
+
+// func main() {
+// 	http.HandleFunc("/", handler)
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
+
+// EXAMPLE 22
+// REGEX
+
+// func main() {
+// 	text := "a aba abba abbba abbbba"
+// 	re := regexp.MustCompile("b+")
+
+// 	res := re.FindAllString(text, -1)
+// 	for _, v := range res {
+// 		fmt.Println(v)
+// 	}
+// 	fmt.Println(res)
+// }
 
 // EXAMPLE 21
 // Slices gotcha & fix like closures
