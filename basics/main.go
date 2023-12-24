@@ -21,7 +21,53 @@ Do not capture refrence to a Loop variable
 
 // GO OOPS START
 
+// EXAMPLE 06
+
+// type Text string
+
+// func (t *Text) Write(p []byte) (int, error) {
+// 	*t = Text(string(p))
+// 	return len(p), nil
+// }
+
+// func main() {
+// 	var t Text
+// 	if len(os.Args) > 1 {
+// 		file, _ := os.Open(os.Args[1])
+// 		io.Copy(&t, file)
+// 	}
+// 	fmt.Printf("%v\n", string(t))
+// 	fmt.Printf("%d bytes written\n", len(t))
+// }
+
 // EXAMPLE 05
+
+// type Point struct {
+// 	X, Y float64
+// }
+
+// type Line struct {
+// 	Begin, End Point
+// }
+
+// func (l Line) Distance() float64 {
+// 	return math.Hypot(l.End.X-l.Begin.X, l.End.Y-l.Begin.Y)
+// }
+
+// func (l Line) ScaleBy(f float64) Line {
+// 	l.End.X += (f - 1) * (l.End.X - l.Begin.X)
+// 	l.End.Y += (f - 1) * (l.End.Y - l.Begin.Y)
+// 	return Line{l.Begin, Point{l.End.X, l.End.Y}}
+// }
+
+// func main() {
+// 	l1 := Line{Point{1, 2}, Point{4, 6}}
+// 	l2 := l1.ScaleBy(2.5)
+// 	fmt.Println(l1.Distance())
+// 	fmt.Println(l2.Distance())
+// 	// Method chaining, only possible as ScaleBy() is returning Line
+// 	fmt.Println(Line{Point{1, 2}, Point{4, 6}}.ScaleBy(10).Distance())
+// }
 
 // EXAMPLE 04 (IMPORTANT!)
 
