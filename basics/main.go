@@ -1,10 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"log"
-	"net/http"
-	"text/template"
+	"fmt"
+	"io"
+	"os"
 )
 
 /*
@@ -14,59 +13,141 @@ So you are always gonna see map of key to struct pointers
 Ex:- map[string]*Employee
 
 We can't take address of a MAP or SLICE entry, why?
-Because slices can get reallocated & we are then storing some stale address, in case of maps, maps keep on changing (rearranging themselves here and there i.e no order), so we too might keep
-pointing to some stale pointer variable.
+Because slices can get reallocated & we are then storing some stale address, in case of maps, maps keep on changing
+(rearranging themselves here and there i.e no order), so we too might keep pointing to some stale pointer variable.
 AVOID:- &slice[0] or %map[key]
 
 Do not capture refrence to a Loop variable
+
+// OOPS
+// IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
+// NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS INTERFACE METHODS)
+// A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
 */
+
+// GO OOPS START
+
+// EXAMPLE 03 (IMPORTANT EXAMPLE)
+
+// io.Writer is an interface with Write(p []byte) method
+// io.Reader is an interface with Read(p []byte) method
+
+func main() {
+	f1, _ := os.Open("ip.txt")
+	f2, _ := os.Create("out.txt")
+
+	n, _ := io.Copy(f2, f1) // io.Copy(dest io.Writer, interface src io.Reader interface)
+
+	fmt.Println("copied", n, "bytes")
+}
+
+// EXAMPLE 02
+//  A method is a function associated with a type
+// Both Offset and Move are methods because they have a receiver of type Point
+// and *Point, respectively. They operate on instances of the Point type.
+
+// type Point struct {
+// 	x float64
+// 	y float64
+// }
+
+// func (p Point) Offset(x float64, y float64) Point {
+// 	return Point{p.x + x, p.y + y}
+// }
+
+// func (p *Point) Move(x float64, y float64) {
+// 	p.x += x
+// 	p.y += y
+// }
+
+// func main() {
+// 	p := Point{
+// 		x: 0,
+// 		y: 0,
+// 	}
+// 	fmt.Println(p)
+// 	p1 := p.Offset(13, 13)
+// 	fmt.Println(p1)
+// 	fmt.Println(p)
+// 	p.Move(4, 5)
+// 	fmt.Println(p)
+// }
+
+// EXAMPLE 01
+
+// type IntSlice []int
+
+// func (is IntSlice) String() string {
+// 	var strs []string
+
+// 	for _, v := range is {
+// 		strs = append(strs, strconv.Itoa(v))
+// 	}
+// 	return "[" + strings.Join(strs, ";") + "]"
+// }
+
+// func main() {
+// 	var v IntSlice = []int{1, 2, 3}
+
+// 	// s is an interface, what can I assign to an interface?
+// 	// I can assign to it anything that satisfies the interface (any actual type that has a String method here!)
+// 	var s fmt.Stringer = v
+
+// 	for i, v := range v {
+// 		fmt.Printf("v[%d]: %d\n", i, v)
+// 	}
+// 	fmt.Printf("%T %[1]v\n", v)
+// 	fmt.Printf("%T %[1]v\n", s)
+// }
+
+// OOPS END
 
 // EXAMPLE 24
 // Client Server
 
-type todo struct {
-	UserID    int    `json:"userID"`
-	ID        int    `json:"id"`
-	Title     string `json:"title"`
-	Completed bool   `json:"completed"`
-}
+// type todo struct {
+// 	UserID    int    `json:"userID"`
+// 	ID        int    `json:"id"`
+// 	Title     string `json:"title"`
+// 	Completed bool   `json:"completed"`
+// }
 
-var form = `
-<h1>Todo #{{.ID}}</h1>
-<div style="color:green">{{.UserID}}</div>
-<div>{{.Title}}</div>
-<h3>Completed {{.Completed}}</h3>
-`
+// var form = `
+// <h1>Todo #{{.ID}}</h1>
+// <div style="color:green">{{.UserID}}</div>
+// <div>{{.Title}}</div>
+// <h3>Completed {{.Completed}}</h3>
+// `
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	const base = "https://jsonplaceholder.typicode.com/"
-	resp, err := http.Get(base + r.URL.Path)
+// func handler(w http.ResponseWriter, r *http.Request) {
+// 	const base = "https://jsonplaceholder.typicode.com/"
+// 	resp, err := http.Get(base + r.URL.Path)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+// 		return
+// 	}
 
-	defer resp.Body.Close()
+// 	defer resp.Body.Close()
 
-	// body, err := io.ReadAll(resp.Body)
+// 	// body, err := io.ReadAll(resp.Body)
 
-	var item todo
-	// err = json.Unmarshal(body, &item)
+// 	var item todo
+// 	// err = json.Unmarshal(body, &item)
 
-	if json.NewDecoder(resp.Body).Decode(&item); err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
-	tmp1 := template.New("mine")
-	tmp1.Parse(form)
-	tmp1.Execute(w, item)
-}
+// 	if json.NewDecoder(resp.Body).Decode(&item); err != nil {
+// 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+// 		return
+// 	}
+// 	tmp1 := template.New("mine")
+// 	tmp1.Parse(form)
+// 	tmp1.Execute(w, item)
+// }
 
-func main() {
-	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
+// func main() {
+// 	http.HandleFunc("/", handler)
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
 
 // EXAMPLE 23
 // Http Server
