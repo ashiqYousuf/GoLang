@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"io"
-	"os"
-)
-
 /*
 We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
@@ -21,25 +15,80 @@ Do not capture refrence to a Loop variable
 
 // OOPS
 // IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
-// NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS INTERFACE METHODS)
+// NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
 // A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
 */
 
 // GO OOPS START
 
+// EXAMPLE 05
+
+// EXAMPLE 04 (IMPORTANT!)
+
+// type Point struct {
+// 	X, Y float64
+// }
+
+// type Line struct {
+// 	Begin, End Point
+// }
+
+// type Path []Point
+
+// func (l Line) Distance() float64 {
+// 	return math.Hypot(l.End.X-l.Begin.X, l.End.Y-l.Begin.Y)
+// }
+
+// func (p Path) Distance() (sum float64) {
+// 	for i := 1; i < len(p); i++ {
+// 		sum += Line{p[i-1], p[i]}.Distance()
+// 	}
+// 	return sum
+// }
+
+// type Distancer interface {
+// 	Distance() float64
+// }
+
+// // Line and Path both UDT satisfy the Distancer interface as both have the Distance() method
+// func PrintDistance(d Distancer) {
+// 	fmt.Println(d.Distance())
+// }
+
+// func main() {
+// 	l := Line{Point{1, 2}, Point{4, 6}}
+// 	path := Path{{1, 1}, {5, 1}, {5, 4}, {1, 1}}
+// 	PrintDistance(l)    // l.DIstance()
+// 	PrintDistance(path) // path.Distance()
+// }
+
 // EXAMPLE 03 (IMPORTANT EXAMPLE)
 
 // io.Writer is an interface with Write(p []byte) method
 // io.Reader is an interface with Read(p []byte) method
+// in io.Copy(dest, src), anything with the Read() method can be the src
+// and anything with the Write() method can be the dest
 
-func main() {
-	f1, _ := os.Open("ip.txt")
-	f2, _ := os.Create("out.txt")
+// type ByteCounter int // concrete type, providing behaviour of a Writer
 
-	n, _ := io.Copy(f2, f1) // io.Copy(dest io.Writer, interface src io.Reader interface)
+// func (b *ByteCounter) Write(p []byte) (int, error) {
+// 	// I need a pointer to the receiver (ByteCounter) as i need to modify it
+// 	l := len(p)
+// 	*b += ByteCounter(l)
+// 	return l, nil
+// }
 
-	fmt.Println("copied", n, "bytes")
-}
+// func main() {
+// 	var c ByteCounter
+// 	f1, _ := os.Open("ip.txt")
+// 	// f2, _ := os.Create("out.txt")
+// 	f2 := &c
+
+// 	n, _ := io.Copy(f2, f1) // io.Copy(dest io.Writer, interface src io.Reader interface)
+
+// 	fmt.Println("copied", n, "bytes")
+// 	fmt.Println(c)
+// }
 
 // EXAMPLE 02
 //  A method is a function associated with a type
@@ -101,6 +150,12 @@ func main() {
 // }
 
 // OOPS END
+
+// *************************************************************************************************************************
+// *************************************************************************************************************************
+// *************************************************************************************************************************
+// *************************************************************************************************************************
+// *************************************************************************************************************************
 
 // EXAMPLE 24
 // Client Server
