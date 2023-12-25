@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+)
+
 /*
 We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
@@ -17,12 +24,157 @@ OOPS
 IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
 NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
 A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
+AN INTERFACE IS JUST LIKE A ABSTRACT PARENT CLASS (WHICH DEFINES THE BEHAVIOUR)
+WE CAN ASSIGN TO INTERFACE ANY TYPE THAT IMPLEMENTS INTERFACE
 
 IN COMPOSITION, FIELDS & METHODS ARE PROMOTED
 WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 */
 
 // GO OOPS START
+
+// EXAMPLE 12
+// WEB SERVER WITH CRUD ON HASH TABLE
+
+type dollars float32
+
+type database map[string]dollars
+
+func (d dollars) String() string {
+	return fmt.Sprintf("$%.2f", d)
+}
+
+// add the handlers
+
+func (db database) list(w http.ResponseWriter, r *http.Request) {
+	for item, price := range db {
+		fmt.Fprintf(w, "%s: %v\n", item, price)
+	}
+}
+
+func (db database) add(w http.ResponseWriter, r *http.Request) {
+	item := r.URL.Query().Get("item")
+	price := r.URL.Query().Get("price")
+
+	if _, ok := db[item]; ok {
+		msg := fmt.Sprintf("duplicate item: %q", item)
+		http.Error(w, msg, http.StatusBadRequest) //400
+		return
+	}
+
+	p, err := strconv.ParseFloat(price, 32)
+	if err != nil {
+		msg := fmt.Sprintf("invalid price: %q", price)
+		http.Error(w, msg, http.StatusBadRequest) //400
+		return
+	}
+
+	db[item] = dollars(p)
+	fmt.Fprintf(w, "added %s with price %s\n", item, db[item])
+}
+
+func (db database) update(w http.ResponseWriter, r *http.Request) {
+	item := r.URL.Query().Get("item")
+	price := r.URL.Query().Get("price")
+
+	if _, ok := db[item]; !ok {
+		msg := fmt.Sprintf("no such item: %q", item)
+		http.Error(w, msg, http.StatusNotFound) //404
+		return
+	}
+
+	p, err := strconv.ParseFloat(price, 32)
+	if err != nil {
+		msg := fmt.Sprintf("invalid price: %q", price)
+		http.Error(w, msg, http.StatusBadRequest) //400
+		return
+	}
+
+	db[item] = dollars(p)
+	fmt.Fprintf(w, "new price for item %s is %s\n", db[item], item)
+}
+
+func (db database) detail(w http.ResponseWriter, r *http.Request) {
+	item := r.URL.Query().Get("item")
+
+	if _, ok := db[item]; !ok {
+		msg := fmt.Sprintf("no such item: %q", item)
+		http.Error(w, msg, http.StatusNotFound) //404
+		return
+	}
+
+	fmt.Fprintf(w, "item %s has price %s\n", db[item], item)
+}
+
+func (db database) delete(w http.ResponseWriter, r *http.Request) {
+	item := r.URL.Query().Get("item")
+
+	if _, ok := db[item]; !ok {
+		msg := fmt.Sprintf("no such item: %q", item)
+		http.Error(w, msg, http.StatusNotFound) //404
+		return
+	}
+
+	delete(db, item)
+
+	fmt.Fprintf(w, "deleted item %s\n", db[item])
+}
+
+func main() {
+	db := database{
+		"shoes": 50,
+		"socks": 5,
+	}
+
+	// add the routes
+
+	http.HandleFunc("/list", db.list)
+	http.HandleFunc("/create", db.add)
+	http.HandleFunc("/update", db.update)
+	http.HandleFunc("/detail", db.detail)
+	http.HandleFunc("/delete", db.delete)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// EXAMPLE 11
+
+// type Circle struct {
+// 	Radius float64
+// }
+
+// type Rectangle struct {
+// 	Length, Width float64
+// }
+
+// type Shape interface {
+// 	Area() float64
+// }
+
+// func (c Circle) Area() float64 {
+// 	return (c.Radius * c.Radius) * 22 / 7
+// }
+
+// func (r Rectangle) Area() float64 {
+// 	return (r.Length * r.Width)
+// }
+
+// func getArea(shape Shape) {
+// 	fmt.Println(shape.Area())
+// }
+
+// func main() {
+// 	r := Rectangle{4, 5}
+// 	r2 := Rectangle{20, 2.5}
+// 	c := Circle{7}
+
+// 	shapes := []Shape{r, c, r2}
+
+// 	for _, sh := range shapes {
+// 		// fmt.Println(sh.Area())
+// 		getArea(sh)
+// 	}
+// }
 
 // EXAMPLE 10
 // Method Values
