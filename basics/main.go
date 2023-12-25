@@ -13,13 +13,108 @@ AVOID:- &slice[0] or %map[key]
 
 Do not capture refrence to a Loop variable
 
-// OOPS
-// IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
-// NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
-// A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
+OOPS
+IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
+NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
+A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
+
+IN COMPOSITION, FIELDS & METHODS ARE PROMOTED
+WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 */
 
 // GO OOPS START
+
+// EXAMPLE 08
+
+// sort.Sort(sort.interface) takes an interface with 3 methods:- Len(), Less(), Swap()
+// Any Type which has all 3 methods can implement this interface
+
+// type Organ struct {
+// 	Name   string
+// 	Weight int
+// }
+
+// type Organs []Organ
+
+// func (s Organs) Len() int {
+// 	return len(s)
+// }
+
+// func (s Organs) Swap(i, j int) {
+// 	s[i], s[j] = s[j], s[i]
+// }
+
+// type ByName struct {
+// 	Organs
+// }
+
+// type ByWeight struct {
+// 	Organs
+// }
+
+// func (s ByName) Less(i, j int) bool {
+// 	return s.Organs[i].Name < s.Organs[j].Name
+// }
+
+// func (s ByWeight) Less(i, j int) bool {
+// 	return s.Organs[i].Weight < s.Organs[j].Weight
+// }
+
+// func main() {
+// 	s := []Organ{{"Brain", 1200}, {"Allevolie", 12}, {"Heart", 280}, {"Pancreas", 350}, {"Liver", 3210}}
+// 	sort.Sort(ByName{s})
+// 	fmt.Println(s)
+// 	sort.Sort(ByWeight{s})
+// 	fmt.Println(s)
+// }
+
+// func main() {
+// 	s := []Organ{{"Brain", 1200}, {"Heart", 280}, {"Pancreas", 350}, {"Liver", 3210}}
+// 	sort.Slice(s, func(i, j int) bool {
+// 		return s[i].Weight > s[j].Weight
+// 	})
+// 	fmt.Println(s)
+// }
+
+// EXAMPLE 07
+
+// type Pair struct {
+// 	Path string
+// 	Hash string
+// }
+
+// type PairWithLength struct {
+// 	Pair
+// 	Length int
+// }
+
+// func (p Pair) String() string {
+// 	return fmt.Sprintf("Hash of %s is %s", p.Path, p.Hash)
+// }
+
+// func (p PairWithLength) String() string {
+// 	return fmt.Sprintf("Hash of %s is %s with Length %d", p.Path, p.Hash, p.Length)
+// }
+
+// func (p Pair) Filename() string {
+// 	return filepath.Base(p.Path)
+// }
+
+// // Any type (Pair, PairWithLength) which has Filename() method can implement this interface
+// type Filenamer interface {
+// 	Filename() string
+// }
+
+// func main() {
+// 	p := Pair{
+// 		Path: "usr/lib",
+// 		Hash: "0xde0d",
+// 	}
+// 	var fn Filenamer = PairWithLength{Pair{"usr/bin", "0xc2od"}, 120}
+
+// 	fmt.Println(p.Filename())
+// 	fmt.Println(fn.Filename())
+// }
 
 // EXAMPLE 06
 
