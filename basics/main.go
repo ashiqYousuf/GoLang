@@ -24,6 +24,44 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 
 // GO OOPS START
 
+// EXAMPLE 10
+// Method Values
+
+// type Point struct {
+// 	X, Y float64
+// }
+
+// func (p Point) Distance(q Point) float64 {
+// 	return math.Hypot(p.X-q.X, p.Y-q.Y)
+// }
+
+// func main() {
+// 	p1 := Point{0, 0}
+// 	points := []Point{{1, 2}, {3, 4}, {5, 6}, {7, 8}, {1, 1}}
+// 	distanceFromOrigin := p1.Distance
+// 	for _, p := range points {
+// 		fmt.Println(distanceFromOrigin(p))
+// 	}
+// }
+
+// EXAMPLE 09
+// CURRYING
+
+// func Multiply(a, b int) int { return a * b }
+
+// func MultiplyByN(n int) func(int) int {
+// 	return func(b int) int {
+// 		return Multiply(n, b)
+// 	}
+// }
+
+// func main() {
+// 	mulby10 := MultiplyByN(10)
+// 	for i := 1; i <= 10; i++ {
+// 		fmt.Println(mulby10(i))
+// 	}
+// }
+
 // EXAMPLE 08
 
 // sort.Sort(sort.interface) takes an interface with 3 methods:- Len(), Less(), Swap()
