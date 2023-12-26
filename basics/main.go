@@ -1,12 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-)
-
 /*
 We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
@@ -31,118 +24,147 @@ IN COMPOSITION, FIELDS & METHODS ARE PROMOTED
 WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 */
 
+// CONCURRENCY START
+
+// GOROUTINES:- 1. A goroutine is a lightweight thread managed by the Go runtime.
+// 2. It's a function that runs concurrently with other goroutines in the same address space.
+
+// CHANNELS:- 1. Channels are communication pipes that allow one goroutine to send data to another goroutine.
+// 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
+// 3. You can send data into a channel from one goroutine and receive it in another.
+
+// ANALOGY:- Here's a simple analogy:
+
+// 1. You have a chef (goroutine) preparing ingredients in the kitchen.
+// 2. The chef needs a specific ingredient (data) from the pantry.
+// 3. The pantry is like a channel. The chef sends a request (puts a message on the channel) asking for the ingredient.
+// 4. The pantry worker (another goroutine) receives the request, fetches the ingredient, and puts it on the channel.
+// 5. The chef then takes the ingredient (receives the message from the channel) and continues cooking
+
+// ch is going to be the channel that we return the data on! (putting result in channel)
+// we can restrict the use of channel either to the Read or Write end.
+// in this case we give it Write end only
+
+// CONCURRENCY END
+// ***********************************************************************************************************************
+// ***********************************************************************************************************************
+// ***********************************************************************************************************************
+// ***********************************************************************************************************************
+// ***********************************************************************************************************************
+// ***********************************************************************************************************************
+
 // GO OOPS START
 
 // EXAMPLE 12
 // WEB SERVER WITH CRUD ON HASH TABLE
 
-type dollars float32
+// type dollars float32
 
-type database map[string]dollars
+// type database map[string]dollars
 
-func (d dollars) String() string {
-	return fmt.Sprintf("$%.2f", d)
-}
+// func (d dollars) String() string {
+// 	return fmt.Sprintf("$%.2f", d)
+// }
 
-// add the handlers
+// // add the handlers
 
-func (db database) list(w http.ResponseWriter, r *http.Request) {
-	for item, price := range db {
-		fmt.Fprintf(w, "%s: %v\n", item, price)
-	}
-}
+// func (db database) list(w http.ResponseWriter, r *http.Request) {
+// 	for item, price := range db {
+// 		fmt.Fprintf(w, "%s: %v\n", item, price)
+// 	}
+// }
 
-func (db database) add(w http.ResponseWriter, r *http.Request) {
-	item := r.URL.Query().Get("item")
-	price := r.URL.Query().Get("price")
+// func (db database) add(w http.ResponseWriter, r *http.Request) {
+// 	item := r.URL.Query().Get("item")
+// 	price := r.URL.Query().Get("price")
 
-	if _, ok := db[item]; ok {
-		msg := fmt.Sprintf("duplicate item: %q", item)
-		http.Error(w, msg, http.StatusBadRequest) //400
-		return
-	}
+// 	if _, ok := db[item]; ok {
+// 		msg := fmt.Sprintf("duplicate item: %q", item)
+// 		http.Error(w, msg, http.StatusBadRequest) //400
+// 		return
+// 	}
 
-	p, err := strconv.ParseFloat(price, 32)
-	if err != nil {
-		msg := fmt.Sprintf("invalid price: %q", price)
-		http.Error(w, msg, http.StatusBadRequest) //400
-		return
-	}
+// 	p, err := strconv.ParseFloat(price, 32)
+// 	if err != nil {
+// 		msg := fmt.Sprintf("invalid price: %q", price)
+// 		http.Error(w, msg, http.StatusBadRequest) //400
+// 		return
+// 	}
 
-	db[item] = dollars(p)
-	fmt.Fprintf(w, "added %s with price %s\n", item, db[item])
-}
+// 	db[item] = dollars(p)
+// 	fmt.Fprintf(w, "added %s with price %s\n", item, db[item])
+// }
 
-func (db database) update(w http.ResponseWriter, r *http.Request) {
-	item := r.URL.Query().Get("item")
-	price := r.URL.Query().Get("price")
+// func (db database) update(w http.ResponseWriter, r *http.Request) {
+// 	item := r.URL.Query().Get("item")
+// 	price := r.URL.Query().Get("price")
 
-	if _, ok := db[item]; !ok {
-		msg := fmt.Sprintf("no such item: %q", item)
-		http.Error(w, msg, http.StatusNotFound) //404
-		return
-	}
+// 	if _, ok := db[item]; !ok {
+// 		msg := fmt.Sprintf("no such item: %q", item)
+// 		http.Error(w, msg, http.StatusNotFound) //404
+// 		return
+// 	}
 
-	p, err := strconv.ParseFloat(price, 32)
-	if err != nil {
-		msg := fmt.Sprintf("invalid price: %q", price)
-		http.Error(w, msg, http.StatusBadRequest) //400
-		return
-	}
+// 	p, err := strconv.ParseFloat(price, 32)
+// 	if err != nil {
+// 		msg := fmt.Sprintf("invalid price: %q", price)
+// 		http.Error(w, msg, http.StatusBadRequest) //400
+// 		return
+// 	}
 
-	db[item] = dollars(p)
-	fmt.Fprintf(w, "new price for item %s is %s\n", db[item], item)
-}
+// 	db[item] = dollars(p)
+// 	fmt.Fprintf(w, "new price for item %s is %s\n", db[item], item)
+// }
 
-func (db database) detail(w http.ResponseWriter, r *http.Request) {
-	item := r.URL.Query().Get("item")
+// func (db database) detail(w http.ResponseWriter, r *http.Request) {
+// 	item := r.URL.Query().Get("item")
 
-	if _, ok := db[item]; !ok {
-		msg := fmt.Sprintf("no such item: %q", item)
-		http.Error(w, msg, http.StatusNotFound) //404
-		return
-	}
+// 	if _, ok := db[item]; !ok {
+// 		msg := fmt.Sprintf("no such item: %q", item)
+// 		http.Error(w, msg, http.StatusNotFound) //404
+// 		return
+// 	}
 
-	fmt.Fprintf(w, "item %s has price %s\n", db[item], item)
-}
+// 	fmt.Fprintf(w, "item %s has price %s\n", db[item], item)
+// }
 
-func (db database) delete(w http.ResponseWriter, r *http.Request) {
-	item := r.URL.Query().Get("item")
+// func (db database) delete(w http.ResponseWriter, r *http.Request) {
+// 	item := r.URL.Query().Get("item")
 
-	if _, ok := db[item]; !ok {
-		msg := fmt.Sprintf("no such item: %q", item)
-		http.Error(w, msg, http.StatusNotFound) //404
-		return
-	}
+// 	if _, ok := db[item]; !ok {
+// 		msg := fmt.Sprintf("no such item: %q", item)
+// 		http.Error(w, msg, http.StatusNotFound) //404
+// 		return
+// 	}
 
-	delete(db, item)
+// 	delete(db, item)
 
-	fmt.Fprintf(w, "deleted item %s\n", db[item])
-}
+// 	fmt.Fprintf(w, "deleted item %s\n", db[item])
+// }
 
-func main() {
-	db := database{
-		"shoes": 50,
-		"socks": 5,
-	}
+// func main() {
+// 	db := database{
+// 		"shoes": 50,
+// 		"socks": 5,
+// 	}
 
-	// add the routes
+// 	// add the routes
 
-	http.HandleFunc("/list", db.list)
-	http.HandleFunc("/create", db.add)
-	http.HandleFunc("/update", db.update)
-	http.HandleFunc("/detail", db.detail)
-	http.HandleFunc("/delete", db.delete)
+// 	http.HandleFunc("/list", db.list)
+// 	http.HandleFunc("/create", db.add)
+// 	http.HandleFunc("/update", db.update)
+// 	http.HandleFunc("/detail", db.detail)
+// 	http.HandleFunc("/delete", db.delete)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
 
 // EXAMPLE 11
 // By using interfaces, you can write functions that operate on different types as long as they satisfy the required interface.
-// This is powerful because it allows you to write more generic and reusable code
+// This is powerful because it allows you to write more generic and reusable code.
 
 // getArea function takes any Shape as a parameter. This function doesn't need to know whether it's
-// dealing with a circle or a rectangle; it just cares that the shape has an Area method
+// dealing with a circle or a rectangle; it just cares that the shape has an Area method.
 
 // type Circle struct {
 // 	Radius float64
