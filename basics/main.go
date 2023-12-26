@@ -138,6 +138,11 @@ func main() {
 }
 
 // EXAMPLE 11
+// By using interfaces, you can write functions that operate on different types as long as they satisfy the required interface.
+// This is powerful because it allows you to write more generic and reusable code
+
+// getArea function takes any Shape as a parameter. This function doesn't need to know whether it's
+// dealing with a circle or a rectangle; it just cares that the shape has an Area method
 
 // type Circle struct {
 // 	Radius float64
