@@ -1,5 +1,11 @@
 package main
 
+import (
+	"log"
+	"net/http"
+	"time"
+)
+
 /*
 We can't take address of a MAP entry.
 Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
@@ -41,9 +47,50 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 4. The pantry worker (another goroutine) receives the request, fetches the ingredient, and puts it on the channel.
 // 5. The chef then takes the ingredient (receives the message from the channel) and continues cooking
 
-// ch is going to be the channel that we return the data on! (putting result in channel)
-// we can restrict the use of channel either to the Read or Write end.
-// in this case we give it Write end only
+type result struct {
+	url     string
+	err     error
+	latency time.Duration
+}
+
+func get(url string, ch chan<- result) {
+	// ch is going to be the channel that we return the data on! (putting result in channel)
+	// we can restrict the use of channel either to the Read or Write end.
+	// in this case we give it Write end only
+	start := time.Now()
+
+	if resp, err := http.Get(url); err != nil {
+		ch <- result{url, err, 0} // send on channel
+	} else {
+		t := time.Since(start).Round(time.Millisecond)
+		ch <- result{url, nil, t} // send on channel
+		resp.Body.Close()
+	}
+}
+
+func main() {
+	results := make(chan result)
+	list := []string{
+		"https://amazon.com",
+		"https://google.com",
+		"https://nytimes.com",
+		"https://wsj.com",
+	}
+
+	for _, url := range list {
+		go get(url, results)
+	}
+
+	for range list {
+		r := <-results
+
+		if r.err != nil {
+			log.Printf("%-20s %s %s\n", r.url, r.latency, r.err)
+		} else {
+			log.Printf("%-20s %s\n", r.url, r.latency)
+		}
+	}
+}
 
 // CONCURRENCY END
 // ***********************************************************************************************************************
