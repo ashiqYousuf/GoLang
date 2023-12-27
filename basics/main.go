@@ -1,30 +1,38 @@
 package main
 
-import (
-	"log"
-	"net/http"
-	"time"
-)
+/*
+	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
+	👏2. MAIN SHOULD BLOCK TO ALLOW OTHER GO-ROUTINES TO EXECUTE (time.Sleep() || Stdin || Reading from Channel) WHICH ARE CREATED IN MAIN
+			OTHERWISE THOSE GO-ROUTINES ARE ONLY CREATED BUT NOT EXECUTED!
+	👏3. DATA IN CHANNELS FLOW IN ORDER
+	👏4. CONCURRENCY CAN LEAD TO PARALELLISM (DEPENDS  ON YOUR H/W)
+
+	//👍 DO NOT LOOP ON CHANNEL.
+	//👍 IF THERE IS NO DATA TO READ, It'LL WAIT FOR THE DATA THAT'S NEVER GOING TO ARRIVE.
+	//👍 I'M NOT CLOSING THE CHANNEL, SO I WANT TO MAKE SURE THAT I'm NOT READING DATA MORE TIMES THAN THERE COULD BE DATA IN THE CHANNEL.
+	//👍 WHY DON'T I CLOSE THE CHANNEL?
+	//👍 YOU CAN ONLY CLOSE THE CHANNEL ONCE! YOU CAN'T CLOSE THE CHANNEL THAT's ALREADY  BEEN CLOSED.
+	//👍 I HAVE 99 GO-ROUTINES? WHO CLOSES THE CHANNEL, WHICH ONE AMONG THEM ?
+	//👍 LAST PERSON ALWAYS TURNS THE LIGHTS OFF, BUT THERE IS NO WAY IN GO-ROUTINES TO KNOW EXACTLY WHICH ONE IS THE LAST?
 
 /*
-We can't take address of a MAP entry.
-Also if I have a map of structs & i wanna do something to a value inside that struct, I can't do that.
-So you are always gonna see map of key to struct pointers
-Ex:- map[string]*Employee
 
-We can't take address of a MAP or SLICE entry, why?
+/*
+👏We can't take address of a MAP or SLICE entry, why?
 Because slices can get reallocated & we are then storing some stale address, in case of maps, maps keep on changing
 (rearranging themselves here and there i.e no order), so we too might keep pointing to some stale pointer variable.
 AVOID:- &slice[0] or %map[key]
+Always gonna see map[string]*Employee and not map[string]Employee
 
-Do not capture refrence to a Loop variable
+👏Do not capture refrence to a Loop variable
 
 OOPS
-IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
-NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
+
+👏IN GO WE CAN PUT METHODS ON ANY USER DECLARED TYPE
+👏NOTE THAT I CAN ASSIGN ANYTHING TO THE INTERFACE THAT SATISFIES THE INTERFACE (ANY TYPE THAT HAS ALL INTERFACE METHODS)
 A METHOD IS A FUNCTION ASSOCIATED WITH A TYPE
-AN INTERFACE IS JUST LIKE A ABSTRACT PARENT CLASS (WHICH DEFINES THE BEHAVIOUR)
-WE CAN ASSIGN TO INTERFACE ANY TYPE THAT IMPLEMENTS INTERFACE
+👏AN INTERFACE IS JUST LIKE A ABSTRACT PARENT CLASS (WHICH DEFINES THE BEHAVIOUR)
+👏WE CAN ASSIGN TO INTERFACE ANY TYPE THAT IMPLEMENTS INTERFACE
 
 IN COMPOSITION, FIELDS & METHODS ARE PROMOTED
 WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
@@ -32,65 +40,121 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 
 // CONCURRENCY START
 
-// GOROUTINES:- 1. A goroutine is a lightweight thread managed by the Go runtime.
+// 👏GOROUTINES:- 1. A goroutine is a lightweight thread managed by the Go runtime.
 // 2. It's a function that runs concurrently with other goroutines in the same address space.
 
-// CHANNELS:- 1. Channels are communication pipes that allow one goroutine to send data to another goroutine.
+// 👏CHANNELS:- 1. Channels are communication pipes that allow one goroutine to send data to another goroutine.
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// ANALOGY:- Here's a simple analogy:
+// EXAMPLE 03 GO WEB SERVER IS CONCURRENT! (LEAVE IT)
 
-// 1. You have a chef (goroutine) preparing ingredients in the kitchen.
-// 2. The chef needs a specific ingredient (data) from the pantry.
-// 3. The pantry is like a channel. The chef sends a request (puts a message on the channel) asking for the ingredient.
-// 4. The pantry worker (another goroutine) receives the request, fetches the ingredient, and puts it on the channel.
-// 5. The chef then takes the ingredient (receives the message from the channel) and continues cooking
+// type nextCh chan int
 
-type result struct {
-	url     string
-	err     error
-	latency time.Duration
-}
+// // METHOD ON TYPE nextCh
+// func (ch nextCh) handler(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Fprintf(w, "<h1>You got %d</h1>", <-ch)
+// }
 
-func get(url string, ch chan<- result) {
-	// ch is going to be the channel that we return the data on! (putting result in channel)
-	// we can restrict the use of channel either to the Read or Write end.
-	// in this case we give it Write end only
-	start := time.Now()
+// func counter(ch chan<- int) {
+// 	for i := 0; ; i++ {
+// 		ch <- i
+// 	}
+// }
 
-	if resp, err := http.Get(url); err != nil {
-		ch <- result{url, err, 0} // send on channel
-	} else {
-		t := time.Since(start).Round(time.Millisecond)
-		ch <- result{url, nil, t} // send on channel
-		resp.Body.Close()
-	}
-}
+// func main() {
+// 	var nextID nextCh = make(chan int)
 
-func main() {
-	results := make(chan result)
-	list := []string{
-		"https://amazon.com",
-		"https://google.com",
-		"https://nytimes.com",
-		"https://wsj.com",
-	}
+// 	go counter(nextID)
 
-	for _, url := range list {
-		go get(url, results)
-	}
+// 	http.HandleFunc("/", nextID.handler)
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
 
-	for range list {
-		r := <-results
+// EXAMPLE 02 GO WEB SERVER IS CONCURRENT!
+// 👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀 (IMPORTANT EXAMPLE)
 
-		if r.err != nil {
-			log.Printf("%-20s %s %s\n", r.url, r.latency, r.err)
-		} else {
-			log.Printf("%-20s %s\n", r.url, r.latency)
-		}
-	}
-}
+// var nextID = make(chan int)
+
+// func handler(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Fprintf(w, "<h1>You got %d</h1>", <-nextID) // Blocking, can't read unless some go-routine writes to it
+// 	// nextID++ // 💀READ -> MODIFY -> WRITE CYCLE | UNSAFE if nextID is a simple type (int)
+// }
+
+// func counter() {
+// 	for i := 0; ; i++ {
+// 		nextID <- i // 👍 Blocking call unless a receiver reads  from the channel
+// 	}
+// }
+
+// func main() {
+// 	go counter()
+// 	http.HandleFunc("/", handler)
+// 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+// 		fmt.Fprintf(w, "Favicon served")
+// 	})
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
+
+// EXAMPLE 01 PARALLEL GET THROUGH HTTP
+
+// type result struct {
+// 	url     string
+// 	err     error
+// 	latency time.Duration
+// }
+
+// func get(url string, ch chan<- result) {
+// 	start := time.Now()
+
+// 	if resp, err := http.Get(url); err != nil {
+// 		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
+// 	} else {
+// 		t := time.Since(start).Round(time.Millisecond)
+// 		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
+// 		resp.Body.Close()
+// 	}
+// 	// fmt.Println("End")
+// }
+
+// func main() {
+// 	results := make(chan result) // declaring channel of result type
+// 	list := []string{
+// 		"https://amazon.com",
+// 		"https://google.com",
+// 		"https://nytimes.com",
+// 		"https://youtube.com",
+// 	}
+
+// 	for _, url := range list {
+// 		go get(url, results)
+// 	}
+
+// 	for range list {
+// 		// 🌻Reading from channel (blocking call, until some go-routine writes to the channel) , data flows in order
+// 		r := <-results
+
+// 		if r.err != nil {
+// 			log.Printf("%-20s %s\n", r.url, r.err)
+// 		} else {
+// 			log.Printf("%-20s %s\n", r.url, r.latency)
+// 		}
+// 	}
+
+// 	// time.Sleep(time.Millisecond * 3000) //blocking call
+// 	//👍 DO NOT LOOP ON CHANNEL.
+
+// 	// for i := range results {
+// 	// r := <-results
+
+// 	// if r.err != nil {
+// 	// 	log.Printf("%-20s %s %s\n", r.url, r.latency, r.err)
+// 	// } else {
+// 	// 	log.Printf("%-20s %s\n", r.url, r.latency)
+// 	// }
+// 	// 	fmt.Println(i)
+// 	// }
+// }
 
 // CONCURRENCY END
 // ***********************************************************************************************************************
