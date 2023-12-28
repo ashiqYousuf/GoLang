@@ -3,7 +3,7 @@ package main
 /*
 	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
 	👏2. MAIN SHOULD BLOCK TO ALLOW OTHER GO-ROUTINES TO EXECUTE (time.Sleep() || Stdin || Reading from Channel) WHICH ARE CREATED IN MAIN
-			OTHERWISE THOSE GO-ROUTINES ARE ONLY CREATED BUT NOT EXECUTED!
+			OTHERWISE THOSE GO-ROUTINES ARE ONLY CREATED BUT NEVER EXECUTED!
 	👏3. DATA IN CHANNELS FLOW IN ORDER
 	👏4. CONCURRENCY CAN LEAD TO PARALELLISM (DEPENDS  ON YOUR H/W)
 
@@ -47,6 +47,30 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
+// EXAMPLE 04
+
+// var counter int
+
+// func writer(ch chan<- int) {
+// 	fmt.Println("START WRITING")
+// 	ch <- counter
+// 	counter++
+// 	fmt.Println("END WRITING")
+// }
+
+// func reader(ch <-chan int) {
+// 	fmt.Println("START READING")
+// 	// val := <-c
+// 	fmt.Println("END READING")
+// }
+
+// func main() {
+// 	ch := make(chan int)
+// 	go writer(ch)
+// 	go reader(ch)
+// 	fmt.Scanln()
+// }
+
 // EXAMPLE 03 GO WEB SERVER IS CONCURRENT! (LEAVE IT)
 
 // type nextCh chan int
@@ -78,7 +102,6 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 
 // func handler(w http.ResponseWriter, r *http.Request) {
 // 	fmt.Fprintf(w, "<h1>You got %d</h1>", <-nextID) // Blocking, can't read unless some go-routine writes to it
-// 	// nextID++ // 💀READ -> MODIFY -> WRITE CYCLE | UNSAFE if nextID is a simple type (int)
 // }
 
 // func counter() {
