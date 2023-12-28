@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 /*
 	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
@@ -17,7 +21,12 @@ import "fmt"
 	//👍 I HAVE 99 GO-ROUTINES? WHO CLOSES THE CHANNEL, WHICH ONE AMONG THEM ?
 	//👍 LAST PERSON ALWAYS TURNS THE LIGHTS OFF, BUT THERE IS NO WAY IN GO-ROUTINES TO KNOW EXACTLY WHICH ONE IS THE LAST?
 
-/*
+	//👍 SELECT:- CONTROL STRUCTURE THAT WORKS ON CHANNELS
+	//👍 USING SELECT I CAN LISTEN TO MORE THAN ONE CHANNEL SIMULTANEOUSLY
+	//👍 PROBLEM WITHOUT SELECT:- POOLING MEANS WAITING FOR THE INPUT FROM MULTIPLE CHANNELS SEQUENTIALLY
+	//👍 THE ISSUE HERE IS THAT IF ONE CHANNEL HAS DATA AVAILABLE MORE FREQUENTLY THAN THE OTHER, THE PROGRAM|LOOP
+	MIGHT BE UNNECESSARILY DELAYED
+*/
 
 /*
 👏We can't take address of a MAP or SLICE entry, why?
@@ -49,53 +58,176 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// EXAMPLE 05 PRIME SEIVE
-
-func generator(limit int, ch chan<- int) {
-	for i := 2; i < limit; i++ {
-		ch <- i
-	}
-
-	close(ch) // generator closes
-}
-
-func filter(src <-chan int, dst chan<- int, prime int) {
-	for i := range src {
-		// When src channel closes, this loop is done
-		// i is the integer value coming from the src channel
-		if i%prime != 0 {
-			// If it's not divisible by the prime no. pass it on
-			dst <- i
-		}
-	}
-	close(dst)
-}
-
-func sieve(limit int) {
-	ch := make(chan int)
-
-	go generator(limit, ch)
-
-	for {
-		prime, ok := <-ch
-
-		if !ok {
-			break
-		}
-
-		ch1 := make(chan int)
-		go filter(ch, ch1, prime)
-
-		ch = ch1
-
-		fmt.Print(prime, "  ")
-	}
-}
+// EXAMPLE 08 SELECT || PERIODIC TASKS
 
 func main() {
-	sieve(100) // 2 3 5 7 11 13 17 19 ...
-	fmt.Println()
+	fmt.Println("start")
+	tickRate := 2 * time.Second
+
+	// sends the current time on the returned channel after duration is elasped
+	doneChannel := time.After(5 * tickRate)
+	// send the current time on the channel after each tick (PERIODIC TASK)
+	periodicChannel := time.NewTicker(tickRate).C
+loop:
+	for {
+		select {
+		case <-periodicChannel:
+			// refresh cache after certain period
+			log.Println("tick")
+		case <-doneChannel:
+			break loop
+		}
+	}
+	fmt.Println("finish")
 }
+
+// EXAMPLE 07 SELECT WITH WEB SERVICES
+// CLOSE THE PROGRAM AFTER 5 SECONDS.
+// INTENTIONALLY MY LOCAL SERVER IS TAKING 10 SECONDS
+// WATCH FOR ANOTHER TIMER CHANNEL (simultaneously)
+// 👀👀👀
+
+// type result struct {
+// 	url     string
+// 	err     error
+// 	latency time.Duration
+// }
+
+// func get(url string, ch chan<- result) {
+// 	start := time.Now()
+
+// 	if resp, err := http.Get(url); err != nil {
+// 		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
+// 	} else {
+// 		t := time.Since(start).Round(time.Millisecond)
+// 		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
+// 		resp.Body.Close()
+// 	}
+// }
+
+// func main() {
+// 	// waits for duration to elapse & then sends the current time on returned channel!
+// 	stopper := time.After(5 * time.Second)
+// 	results := make(chan result)
+// 	list := []string{
+// 		"https://amazon.com",
+// 		"https://google.com",
+// 		"https://nytimes.com",
+// 		"https://youtube.com",
+// 		"http://localhost:8000",
+// 	}
+
+// 	for _, url := range list {
+// 		go get(url, results)
+// 	}
+
+// 	for range list {
+// 		// 🌻Reading from channel (blocking call, until some go-routine writes to the channel) , data flows in order
+
+// 		// r := <-results
+// 		select {
+// 		case r := <-results:
+// 			if r.err != nil {
+// 				log.Printf("%-20s %s\n", r.url, r.err)
+// 			} else {
+// 				log.Printf("%-20s %s\n", r.url, r.latency)
+// 			}
+// 		case t := <-stopper:
+// 			//stopper channel reads after 5 seconds
+// 			log.Fatalf("timeout %s", t)
+// 		}
+// 	}
+// }
+
+// EXAMPLE 06 SELECT:
+// 👀👀👀
+
+// func main() {
+// 	chans := []chan int{
+// 		make(chan int),
+// 		make(chan int),
+// 	}
+
+// 	for i := range chans {
+// 		// starting 2 go-routines each one has its own channel
+// 		go func(i int, ch chan<- int) {
+// 			for {
+// 				time.Sleep(time.Duration(i) * time.Second)
+// 				ch <- i
+// 			}
+// 		}(i+1, chans[i])
+// 	}
+
+// 	oneCounter, twoCounter := 0, 0
+// 	for i := 0; i < 12; i++ {
+// 		// 👍 Pooling means waiting for input from multiple channels sequentially
+// 		// The issue here is that if one channel has data available more frequently than the other, the loop might be unnecessarily delayed
+// 		// i1 := <-chans[0]
+// 		// fmt.Println("received", i1)
+// 		// i2 := <-chans[1]
+// 		// fmt.Println("received", i2)
+// 		//👍 SELECT:- allows you to listen to multiple channels simultaneously and proceed with the one that becomes ready first
+
+// 		select {
+// 		case m0 := <-chans[0]:
+// 			fmt.Println("received", m0)
+// 			oneCounter++
+// 		case m1 := <-chans[1]:
+// 			fmt.Println("received", m1)
+// 			twoCounter++
+// 		}
+// 	}
+// 	fmt.Println(oneCounter, twoCounter)
+// }
+
+// EXAMPLE 05 PRIME SEIVE
+// 👀👀👀
+
+// func generator(limit int, ch chan<- int) {
+// 	for i := 2; i < limit; i++ {
+// 		ch <- i
+// 	}
+
+// 	close(ch) // generator closes
+// }
+
+// func filter(src <-chan int, dst chan<- int, prime int) {
+// 	for i := range src {
+// 		// When src channel closes, this loop is done
+// 		// i is the integer value coming from the src channel
+// 		if i%prime != 0 {
+// 			// If it's not divisible by the prime no. pass it on
+// 			dst <- i
+// 		}
+// 	}
+// 	close(dst)
+// }
+
+// func sieve(limit int) {
+// 	ch := make(chan int)
+
+// 	go generator(limit, ch)
+
+// 	for {
+// 		prime, ok := <-ch
+
+// 		if !ok {
+// 			break
+// 		}
+
+// 		ch1 := make(chan int)
+// 		go filter(ch, ch1, prime)
+
+// 		ch = ch1
+
+// 		fmt.Print(prime, "  ")
+// 	}
+// }
+
+// func main() {
+// 	sieve(100) // 2 3 5 7 11 13 17 19 ...
+// 	fmt.Println()
+// }
 
 // EXAMPLE 04
 // 👀👀👀
