@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 /*
 	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
 	👏2. MAIN SHOULD BLOCK TO ALLOW OTHER GO-ROUTINES TO EXECUTE (time.Sleep() || Stdin || Reading from Channel) WHICH ARE CREATED IN MAIN
@@ -47,7 +49,56 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
+// EXAMPLE 05 PRIME SEIVE
+
+func generator(limit int, ch chan<- int) {
+	for i := 2; i < limit; i++ {
+		ch <- i
+	}
+
+	close(ch) // generator closes
+}
+
+func filter(src <-chan int, dst chan<- int, prime int) {
+	for i := range src {
+		// When src channel closes, this loop is done
+		// i is the integer value coming from the src channel
+		if i%prime != 0 {
+			// If it's not divisible by the prime no. pass it on
+			dst <- i
+		}
+	}
+	close(dst)
+}
+
+func sieve(limit int) {
+	ch := make(chan int)
+
+	go generator(limit, ch)
+
+	for {
+		prime, ok := <-ch
+
+		if !ok {
+			break
+		}
+
+		ch1 := make(chan int)
+		go filter(ch, ch1, prime)
+
+		ch = ch1
+
+		fmt.Print(prime, "  ")
+	}
+}
+
+func main() {
+	sieve(100) // 2 3 5 7 11 13 17 19 ...
+	fmt.Println()
+}
+
 // EXAMPLE 04
+// 👀👀👀
 
 // var counter int
 
@@ -96,7 +147,7 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // }
 
 // EXAMPLE 02 GO WEB SERVER IS CONCURRENT!
-// 👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀👀 (IMPORTANT EXAMPLE)
+// 👀👀👀 (IMPORTANT EXAMPLE)
 
 // var nextID = make(chan int)
 
@@ -120,6 +171,7 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // }
 
 // EXAMPLE 01 PARALLEL GET THROUGH HTTP
+// 👀👀👀
 
 // type result struct {
 // 	url     string
