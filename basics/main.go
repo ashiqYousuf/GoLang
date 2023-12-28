@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -15,7 +16,7 @@ import (
 
 	//👍 DO NOT LOOP ON CHANNEL.
 	//👍 IF THERE IS NO DATA TO READ, It'LL WAIT FOR THE DATA THAT'S NEVER GOING TO ARRIVE.
-	//👍 I'M NOT CLOSING THE CHANNEL, SO I WANT TO MAKE SURE THAT I'm NOT READING DATA MORE TIMES THAN THERE COULD BE DATA IN THE CHANNEL.
+	//👍 IF I'M NOT CLOSING THE CHANNEL, SO I WANT TO MAKE SURE THAT I'm NOT READING DATA MORE TIMES THAN THERE COULD BE DATA IN THE CHANNEL.
 	//👍 WHY DON'T I CLOSE THE CHANNEL?
 	//👍 YOU CAN ONLY CLOSE THE CHANNEL ONCE! YOU CAN'T CLOSE THE CHANNEL THAT's ALREADY  BEEN CLOSED.
 	//👍 I HAVE 99 GO-ROUTINES? WHO CLOSES THE CHANNEL, WHICH ONE AMONG THEM ?
@@ -26,6 +27,8 @@ import (
 	//👍 PROBLEM WITHOUT SELECT:- POOLING MEANS WAITING FOR THE INPUT FROM MULTIPLE CHANNELS SEQUENTIALLY
 	//👍 THE ISSUE HERE IS THAT IF ONE CHANNEL HAS DATA AVAILABLE MORE FREQUENTLY THAN THE OTHER, THE PROGRAM|LOOP
 	MIGHT BE UNNECESSARILY DELAYED
+
+	// 💎 OFFERS COMMON WAYS TO CANCEL REQUESTS
 */
 
 /*
@@ -58,28 +61,78 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// EXAMPLE 08 SELECT || PERIODIC TASKS
+// 💎 EXAMPLE 09 CONTEXT
+
+type result struct {
+	url     string
+	err     error
+	latency time.Duration
+}
+
+func get(ctx context.Context, url string, ch chan<- result) {
+	start := time.Now()
+	// 💎 INSERTING A 3 SECOND TIME OUT IN THE HTTP GET
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+
+	if resp, err := http.DefaultClient.Do(req); err != nil {
+		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
+	} else {
+		t := time.Since(start).Round(time.Millisecond)
+		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
+		resp.Body.Close()
+	}
+}
 
 func main() {
-	fmt.Println("start")
-	tickRate := 2 * time.Second
+	results := make(chan result) // declaring channel of result type
+	list := []string{
+		"https://amazon.com",
+		"https://google.com",
+		"https://nytimes.com",
+		"https://youtube.com",
+		"http://localhost:8000",
+	}
 
-	// sends the current time on the returned channel after duration is elasped
-	doneChannel := time.After(5 * tickRate)
-	// send the current time on the channel after each tick (PERIODIC TASK)
-	periodicChannel := time.NewTicker(tickRate).C
-loop:
-	for {
-		select {
-		case <-periodicChannel:
-			// refresh cache after certain period
-			log.Println("tick")
-		case <-doneChannel:
-			break loop
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	for _, url := range list {
+		go get(ctx, url, results)
+	}
+
+	for range list {
+		r := <-results
+
+		if r.err != nil {
+			log.Printf("%-20s %s\n", r.url, r.err)
+		} else {
+			log.Printf("%-20s %s\n", r.url, r.latency)
 		}
 	}
-	fmt.Println("finish")
 }
+
+// EXAMPLE 08 SELECT || PERIODIC TASKS
+
+// func main() {
+// 	fmt.Println("start")
+// 	tickRate := 2 * time.Second
+
+// 	// sends the current time on the returned channel after duration is elasped
+// 	doneChannel := time.After(5 * tickRate)
+// 	// send the current time on the channel after each tick (PERIODIC TASK)
+// 	periodicChannel := time.NewTicker(tickRate).C
+// loop:
+// 	for {
+// 		select {
+// 		case <-periodicChannel:
+// 			// refresh cache after certain period
+// 			log.Println("tick")
+// 		case <-doneChannel:
+// 			break loop
+// 		}
+// 	}
+// 	fmt.Println("finish")
+// }
 
 // EXAMPLE 07 SELECT WITH WEB SERVICES
 // CLOSE THE PROGRAM AFTER 5 SECONDS.
@@ -110,11 +163,11 @@ loop:
 // 	stopper := time.After(5 * time.Second)
 // 	results := make(chan result)
 // 	list := []string{
-// 		"https://amazon.com",
-// 		"https://google.com",
-// 		"https://nytimes.com",
-// 		"https://youtube.com",
-// 		"http://localhost:8000",
+// "https://amazon.com",
+// "https://google.com",
+// "https://nytimes.com",
+// "https://youtube.com",
+// "http://localhost:8000",
 // 	}
 
 // 	for _, url := range list {
@@ -180,8 +233,7 @@ loop:
 // 	fmt.Println(oneCounter, twoCounter)
 // }
 
-// EXAMPLE 05 PRIME SEIVE
-// 👀👀👀
+// EXAMPLE 05 PRIME SEIVE (LEAVE IT)
 
 // func generator(limit int, ch chan<- int) {
 // 	for i := 2; i < limit; i++ {
@@ -284,7 +336,7 @@ loop:
 // var nextID = make(chan int)
 
 // func handler(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Fprintf(w, "<h1>You got %d</h1>", <-nextID) // Blocking, can't read unless some go-routine writes to it
+// 	fmt.Fprintf(w, "<h1>You got %d</h1>", <-nextID) // Blocking call, can't read unless some go-routine writes to it
 // }
 
 // func counter() {
