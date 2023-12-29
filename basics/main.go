@@ -1,12 +1,5 @@
 package main
 
-import (
-	"context"
-	"log"
-	"net/http"
-	"time"
-)
-
 /*
 	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
 	👏2. MAIN SHOULD BLOCK TO ALLOW OTHER GO-ROUTINES TO EXECUTE (time.Sleep() || Stdin || Reading from Channel) WHICH ARE CREATED IN MAIN
@@ -63,53 +56,53 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 
 // 💎 EXAMPLE 09 CONTEXT
 
-type result struct {
-	url     string
-	err     error
-	latency time.Duration
-}
+// type result struct {
+// 	url     string
+// 	err     error
+// 	latency time.Duration
+// }
 
-func get(ctx context.Context, url string, ch chan<- result) {
-	start := time.Now()
-	// 💎 INSERTING A 3 SECOND TIME OUT IN THE HTTP GET
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// func get(ctx context.Context, url string, ch chan<- result) {
+// 	start := time.Now()
+// 	// 💎 INSERTING A 3 SECOND TIME OUT IN THE HTTP GET
+// 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
-	if resp, err := http.DefaultClient.Do(req); err != nil {
-		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
-	} else {
-		t := time.Since(start).Round(time.Millisecond)
-		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
-		resp.Body.Close()
-	}
-}
+// 	if resp, err := http.DefaultClient.Do(req); err != nil {
+// 		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
+// 	} else {
+// 		t := time.Since(start).Round(time.Millisecond)
+// 		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
+// 		resp.Body.Close()
+// 	}
+// }
 
-func main() {
-	results := make(chan result) // declaring channel of result type
-	list := []string{
-		"https://amazon.com",
-		"https://google.com",
-		"https://nytimes.com",
-		"https://youtube.com",
-		"http://localhost:8000",
-	}
+// func main() {
+// 	results := make(chan result) // declaring channel of result type
+// 	list := []string{
+// 		"https://amazon.com",
+// 		"https://google.com",
+// 		"https://nytimes.com",
+// 		"https://youtube.com",
+// 		"http://localhost:8000",
+// 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+// 	defer cancel()
 
-	for _, url := range list {
-		go get(ctx, url, results)
-	}
+// 	for _, url := range list {
+// 		go get(ctx, url, results)
+// 	}
 
-	for range list {
-		r := <-results
+// 	for range list {
+// 		r := <-results
 
-		if r.err != nil {
-			log.Printf("%-20s %s\n", r.url, r.err)
-		} else {
-			log.Printf("%-20s %s\n", r.url, r.latency)
-		}
-	}
-}
+// 		if r.err != nil {
+// 			log.Printf("%-20s %s\n", r.url, r.err)
+// 		} else {
+// 			log.Printf("%-20s %s\n", r.url, r.latency)
+// 		}
+// 	}
+// }
 
 // EXAMPLE 08 SELECT || PERIODIC TASKS
 
