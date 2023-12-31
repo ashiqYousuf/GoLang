@@ -1,5 +1,12 @@
 package main
 
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+)
+
 /*
 	👏1. SENDING OR RECEIVING CALL ON A CHANNEL ARE BLOCKING IN NATURE UNTIL SENDER FINDS A RECEIVER OR RECEIVER FINDS A SENDER
 	👏2. MAIN SHOULD BLOCK TO ALLOW OTHER GO-ROUTINES TO EXECUTE (time.Sleep() || Stdin || Reading from Channel) WHICH ARE CREATED IN MAIN
@@ -21,7 +28,14 @@ package main
 	//👍 THE ISSUE HERE IS THAT IF ONE CHANNEL HAS DATA AVAILABLE MORE FREQUENTLY THAN THE OTHER, THE PROGRAM|LOOP
 	MIGHT BE UNNECESSARILY DELAYED
 
-	// 💎 CONTEXT:- OFFERS COMMON WAYS TO CANCEL REQUESTS
+	// 💎💎💎💎💎💎💎💎💎
+	CONTEXT:- CONTEXT IS LIKE A BAG OR CONTAINER THAT HOLDS INFORMATION THAT IS SHARED BETWEEN DIFFERENT PARTS OF THE PROGRAM,
+	ESPICIALLY WHEN IT COMES TO HANDLING A REQUEST. THIS INFORMATION CAN INCLUDE THINGS LIKE TIMEOUTS, CANCELLATION SIGNALS,
+	AND OTHER DATA THAT IS SPECIFIC TO THAT REQUEST.
+	EXAMPLE:- IMAGINE YOU ARE BUILDING A WEB SERVER THAT HANDLES A LOT OF INCOMING REQUESTS. EACH REQUEST HAS ITS OWN SPECIFIC
+	NEEDS & REQUIREMENTS, SUCH AS DEADLINE FOR HOW LONG IT SHOULD TAKE TO COMPLETE. THE CONTEXT ALLOWS YOU TO KEEP TRACK OF THESE
+	INDIVIDUAL REQUIREMENTS FOR EACH REQUEST AND MAKE SURE THAT THEY ARE HANDLED PROPERLY!
+	💎💎💎💎💎💎💎💎💎
 */
 
 /*
@@ -56,53 +70,54 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 
 // 💎 EXAMPLE 09 CONTEXT
 
-// type result struct {
-// 	url     string
-// 	err     error
-// 	latency time.Duration
-// }
+func fetchThirdPartyStuffWhichCanBeSlow() (int, error) {
+	time.Sleep(time.Millisecond * 3000)
 
-// func get(ctx context.Context, url string, ch chan<- result) {
-// 	start := time.Now()
-// 	// 💎 INSERTING A 3 SECOND TIME OUT IN THE HTTP GET
-// 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	return 666, nil
+}
 
-// 	if resp, err := http.DefaultClient.Do(req); err != nil {
-// 		ch <- result{url, err, 0} // 🌻writing to channel, blocking call until it finds some receiver
-// 	} else {
-// 		t := time.Since(start).Round(time.Millisecond)
-// 		ch <- result{url, nil, t} // 🌻writing to channel, blocking call until it finds some receiver
-// 		resp.Body.Close()
-// 	}
-// }
+type Response struct {
+	value int
+	err   error
+}
 
-// func main() {
-// 	results := make(chan result) // declaring channel of result type
-// 	list := []string{
-// 		"https://amazon.com",
-// 		"https://google.com",
-// 		"https://nytimes.com",
-// 		"https://youtube.com",
-// 		"http://localhost:8000",
-// 	}
+func fetchUserDate(ctx context.Context, userID int) (int, error) {
+	val := ctx.Value("foo")
+	fmt.Println("value from context: ", val)
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*2000) // timeout 2 seconds
+	defer cancel()
 
-// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-// 	defer cancel()
+	responseChannel := make(chan Response)
 
-// 	for _, url := range list {
-// 		go get(ctx, url, results)
-// 	}
+	go func() {
+		val, err := fetchThirdPartyStuffWhichCanBeSlow()
+		responseChannel <- Response{val, err}
+	}()
 
-// 	for range list {
-// 		r := <-results
+	for {
+		select {
+		// Done is called when timeout is triggered
+		case <-ctx.Done():
+			return 0, fmt.Errorf("api took too long")
+		case res := <-responseChannel:
+			return res.value, res.err
+		}
+	}
+}
 
-// 		if r.err != nil {
-// 			log.Printf("%-20s %s\n", r.url, r.err)
-// 		} else {
-// 			log.Printf("%-20s %s\n", r.url, r.latency)
-// 		}
-// 	}
-// }
+func main() {
+	start := time.Now()
+	// ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "foo", "bar") // storing key value data in context
+	userID := 10
+	val, err := fetchUserDate(ctx, userID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("result: ", val)
+	fmt.Println("took", time.Since(start))
+}
 
 // EXAMPLE 08 SELECT || PERIODIC TASKS
 
