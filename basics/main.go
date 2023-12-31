@@ -35,6 +35,14 @@ import (
 	EXAMPLE:- IMAGINE YOU ARE BUILDING A WEB SERVER THAT HANDLES A LOT OF INCOMING REQUESTS. EACH REQUEST HAS ITS OWN SPECIFIC
 	NEEDS & REQUIREMENTS, SUCH AS DEADLINE FOR HOW LONG IT SHOULD TAKE TO COMPLETE. THE CONTEXT ALLOWS YOU TO KEEP TRACK OF THESE
 	INDIVIDUAL REQUIREMENTS FOR EACH REQUEST AND MAKE SURE THAT THEY ARE HANDLED PROPERLY!
+
+	🤷 context.WithCancel:- CREATES A CONTEXT THAT CAN BE CANCELLED MANUALLY BY CALLING THE CANCEL FUNCTION RETURNED BY WithCancel
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+
+	🤷 context.WithTimeout:- IS A SPECIAL FORM OF WithCancel WHERE THE CONTEXT IS AUTOMATICALLY CANCELLED AFTER A SPECIFIED DURATION
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
 	💎💎💎💎💎💎💎💎💎
 */
 
@@ -69,6 +77,7 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
 // 💎 EXAMPLE 09 CONTEXT
+// 🤷 The context package in Golang provides a way to pass cancellation signals and deadlines to functions and goroutines
 
 func fetchThirdPartyStuffWhichCanBeSlow() (int, error) {
 	time.Sleep(time.Millisecond * 3000)
