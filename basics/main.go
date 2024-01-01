@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -14,21 +14,21 @@ import (
 	👏3. DATA IN CHANNELS FLOW IN ORDER
 	👏4. CONCURRENCY CAN LEAD TO PARALELLISM (DEPENDS  ON YOUR H/W)
 
-	//👍 DO NOT LOOP ON CHANNEL.
-	//👍 IF THERE IS NO DATA TO READ, It'LL WAIT FOR THE DATA THAT'S NEVER GOING TO ARRIVE.
-	//👍 IF I'M NOT CLOSING THE CHANNEL, SO I WANT TO MAKE SURE THAT I'm NOT READING DATA MORE TIMES THAN THERE COULD BE DATA IN THE CHANNEL.
-	//👍 WHY DON'T I CLOSE THE CHANNEL?
-	//👍 YOU CAN ONLY CLOSE THE CHANNEL ONCE! YOU CAN'T CLOSE THE CHANNEL THAT's ALREADY  BEEN CLOSED.
-	//👍 I HAVE 99 GO-ROUTINES? WHO CLOSES THE CHANNEL, WHICH ONE AMONG THEM ?
-	//👍 LAST PERSON ALWAYS TURNS THE LIGHTS OFF, BUT THERE IS NO WAY IN GO-ROUTINES TO KNOW EXACTLY WHICH ONE IS THE LAST?
+	👍 DO NOT LOOP ON CHANNEL.
+	👍 IF THERE IS NO DATA TO READ, It'LL WAIT FOR THE DATA THAT'S NEVER GOING TO ARRIVE.
+	👍 IF I'M NOT CLOSING THE CHANNEL, SO I WANT TO MAKE SURE THAT I'm NOT READING DATA MORE TIMES THAN THERE COULD BE DATA IN THE CHANNEL.
+	👍 WHY DON'T I CLOSE THE CHANNEL?
+	👍 YOU CAN ONLY CLOSE THE CHANNEL ONCE! YOU CAN'T CLOSE THE CHANNEL THAT's ALREADY  BEEN CLOSED.
+	👍 I HAVE 99 GO-ROUTINES? WHO CLOSES THE CHANNEL, WHICH ONE AMONG THEM ?
+	👍 LAST PERSON ALWAYS TURNS THE LIGHTS OFF, BUT THERE IS NO WAY IN GO-ROUTINES TO KNOW EXACTLY WHICH ONE IS THE LAST?
 
-	//👍 SELECT:- CONTROL STRUCTURE THAT WORKS ON CHANNELS
-	//👍 USING SELECT I CAN LISTEN TO MORE THAN ONE CHANNEL SIMULTANEOUSLY
-	//👍 PROBLEM WITHOUT SELECT:- POOLING MEANS WAITING FOR THE INPUT FROM MULTIPLE CHANNELS SEQUENTIALLY
-	//👍 THE ISSUE HERE IS THAT IF ONE CHANNEL HAS DATA AVAILABLE MORE FREQUENTLY THAN THE OTHER, THE PROGRAM|LOOP
+	👍 SELECT:- CONTROL STRUCTURE THAT WORKS ON CHANNELS
+	👍 USING SELECT I CAN LISTEN TO MORE THAN ONE CHANNEL SIMULTANEOUSLY
+	👍 PROBLEM WITHOUT SELECT:- POOLING MEANS WAITING FOR THE INPUT FROM MULTIPLE CHANNELS SEQUENTIALLY
+	👍 THE ISSUE HERE IS THAT IF ONE CHANNEL HAS DATA AVAILABLE MORE FREQUENTLY THAN THE OTHER, THE PROGRAM|LOOP
 	MIGHT BE UNNECESSARILY DELAYED
 
-	// 💎💎💎💎💎💎💎💎💎
+	* 💎💎💎💎💎💎💎💎💎
 	CONTEXT:- CONTEXT IS LIKE A BAG OR CONTAINER THAT HOLDS INFORMATION THAT IS SHARED BETWEEN DIFFERENT PARTS OF THE PROGRAM,
 	ESPICIALLY WHEN IT COMES TO HANDLING A REQUEST. THIS INFORMATION CAN INCLUDE THINGS LIKE TIMEOUTS, CANCELLATION SIGNALS,
 	AND OTHER DATA THAT IS SPECIFIC TO THAT REQUEST.
@@ -78,57 +78,88 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// EXAMPLE 11 CONTEXT WITH HTTP GET
+// ?EXAMPLE 12 RACE CONDITION
 
-type result struct {
-	url     string
-	err     error
-	latency time.Duration
-}
+var arr = make([]int, 5)
 
-func get(ctx context.Context, url string, ch chan<- result) {
-	// INJECTING TIMEOUT IN THE HTTP GET REQUEST
-	start := time.Now()
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-
-	if resp, err := http.DefaultClient.Do(req); err != nil {
-		ch <- result{url, err, 0}
-	} else {
-		t := time.Since(start).Round(time.Millisecond)
-		ch <- result{url, nil, t}
-		resp.Body.Close()
-	}
+func do(i int, ch chan<- *int) {
+	ch <- &i
+	fmt.Println("more++")
+	i += 100 //! UNSAFE (Read Modify Write Cycle)
 }
 
 func main() {
-	results := make(chan result)
-	list := []string{
-		"https://amazon.com",
-		"https://google.com",
-		"https://nytimes.com",
-		"https://youtube.com",
-		"http://localhost:8000",
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	// ch := make(chan *int, 5)
+	ch := make(chan *int)
+	// stopper := time.After(time.Second * 1)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
 
-	for _, url := range list {
-		go get(ctx, url, results)
+	for i := 0; i < 5; i++ {
+		go do(i, ch)
 	}
 
-	for range list {
-		r := <-results
-
-		if r.err != nil {
-			log.Printf("%-20s %s\n", r.url, r.err)
-		} else {
-			log.Printf("%-20s %s\n", r.url, r.latency)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Fatal("exit")
+		case v := <-ch:
+			fmt.Println("value", *v)
 		}
 	}
 }
 
-// EXAMPLE 10 CONTEXT [******************]
+// ?EXAMPLE 11 CONTEXT WITH HTTP GET
+
+// type result struct {
+// 	url     string
+// 	err     error
+// 	latency time.Duration
+// }
+
+// func get(ctx context.Context, url string, ch chan<- result) {
+// 	// INJECTING TIMEOUT IN THE HTTP GET REQUEST
+// 	start := time.Now()
+// 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+
+// 	if resp, err := http.DefaultClient.Do(req); err != nil {
+// 		ch <- result{url, err, 0}
+// 	} else {
+// 		t := time.Since(start).Round(time.Millisecond)
+// 		ch <- result{url, nil, t}
+// 		resp.Body.Close()
+// 	}
+// }
+
+// func main() {
+// 	results := make(chan result)
+// 	list := []string{
+// 		"https://amazon.com",
+// 		"https://google.com",
+// 		"https://nytimes.com",
+// 		"https://youtube.com",
+// 		"http://localhost:8000",
+// 	}
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+// 	defer cancel()
+
+// 	for _, url := range list {
+// 		go get(ctx, url, results)
+// 	}
+
+// 	for range list {
+// 		r := <-results
+
+// 		if r.err != nil {
+// 			log.Printf("%-20s %s\n", r.url, r.err)
+// 		} else {
+// 			log.Printf("%-20s %s\n", r.url, r.latency)
+// 		}
+// 	}
+// }
+
+// ?EXAMPLE 10 CONTEXT [******************]
 
 // func slowFetching(ctx context.Context) (int, error) {
 // 	responseChannel := make(chan int)
@@ -159,7 +190,7 @@ func main() {
 // 	fmt.Println("value", value)
 // }
 
-// 💎 EXAMPLE 09 CONTEXT
+// ?💎 EXAMPLE 09 CONTEXT
 // 🤷 The context package in Golang provides a way to pass cancellation signals and deadlines to functions and goroutines
 
 // func fetchThirdPartyStuffWhichCanBeSlow() (int, error) {
@@ -211,7 +242,7 @@ func main() {
 // 	fmt.Println("took", time.Since(start))
 // }
 
-// EXAMPLE 08 SELECT || PERIODIC TASKS
+// ?EXAMPLE 08 SELECT || PERIODIC TASKS
 
 // func main() {
 // 	fmt.Println("start")
@@ -234,7 +265,7 @@ func main() {
 // 	fmt.Println("finish")
 // }
 
-// EXAMPLE 07 SELECT WITH WEB SERVICES
+// ?EXAMPLE 07 SELECT WITH WEB SERVICES
 // CLOSE THE PROGRAM AFTER 5 SECONDS.
 // INTENTIONALLY MY LOCAL SERVER IS TAKING 10 SECONDS
 // WATCH FOR ANOTHER TIMER CHANNEL (simultaneously)
@@ -292,7 +323,7 @@ func main() {
 // 	}
 // }
 
-// EXAMPLE 06 SELECT:
+// ?EXAMPLE 06 SELECT:
 // 👀👀👀
 
 // func main() {
@@ -333,7 +364,7 @@ func main() {
 // 	fmt.Println(oneCounter, twoCounter)
 // }
 
-// EXAMPLE 05 PRIME SEIVE (LEAVE IT)
+// ?EXAMPLE 05 PRIME SEIVE (LEAVE IT)
 
 // func generator(limit int, ch chan<- int) {
 // 	for i := 2; i < limit; i++ {
@@ -381,7 +412,7 @@ func main() {
 // 	fmt.Println()
 // }
 
-// EXAMPLE 04
+// ?EXAMPLE 04
 // 👀👀👀
 
 // var counter int
@@ -406,7 +437,7 @@ func main() {
 // 	fmt.Scanln()
 // }
 
-// EXAMPLE 03 GO WEB SERVER IS CONCURRENT! (LEAVE IT)
+// ?EXAMPLE 03 GO WEB SERVER IS CONCURRENT! (LEAVE IT)
 
 // type nextCh chan int
 
@@ -430,7 +461,7 @@ func main() {
 // 	log.Fatal(http.ListenAndServe(":8080", nil))
 // }
 
-// EXAMPLE 02 GO WEB SERVER IS CONCURRENT!
+// ?EXAMPLE 02 GO WEB SERVER IS CONCURRENT!
 // 👀👀👀 (IMPORTANT EXAMPLE)
 
 // var nextID = make(chan int)
@@ -454,7 +485,7 @@ func main() {
 // 	log.Fatal(http.ListenAndServe(":8080", nil))
 // }
 
-// EXAMPLE 01 PARALLEL GET THROUGH HTTP
+// ?EXAMPLE 01 PARALLEL GET THROUGH HTTP
 // 👀👀👀
 
 // type result struct {
