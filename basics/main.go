@@ -45,6 +45,8 @@ import (
 	🤷 context.WithTimeout:- IS A SPECIAL FORM OF WithCancel WHERE THE CONTEXT IS AUTOMATICALLY CANCELLED AFTER A SPECIFIED DURATION
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 				defer cancel()
+
+     	GO-ROUTINES KEEP POINTERS TO THE SHARED CHANNELS, IF THE CHANNELS ARE NOT CLOSED IT LEADS TO GO-ROUTINE LEAKS.
 	💎💎💎💎💎💎💎💎💎
 */
 
