@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -35,6 +35,8 @@ import (
 	EXAMPLE:- IMAGINE YOU ARE BUILDING A WEB SERVER THAT HANDLES A LOT OF INCOMING REQUESTS. EACH REQUEST HAS ITS OWN SPECIFIC
 	NEEDS & REQUIREMENTS, SUCH AS DEADLINE FOR HOW LONG IT SHOULD TAKE TO COMPLETE. THE CONTEXT ALLOWS YOU TO KEEP TRACK OF THESE
 	INDIVIDUAL REQUIREMENTS FOR EACH REQUEST AND MAKE SURE THAT THEY ARE HANDLED PROPERLY!
+
+	CONTEXTs FORM IMMUTABLE TREE DATA STRUCTURE.
 
 	🤷 context.WithCancel:- CREATES A CONTEXT THAT CAN BE CANCELLED MANUALLY BY CALLING THE CANCEL FUNCTION RETURNED BY WithCancel
 				ctx, cancel := context.WithCancel(context.Background())
@@ -76,57 +78,138 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// 💎 EXAMPLE 09 CONTEXT
-// 🤷 The context package in Golang provides a way to pass cancellation signals and deadlines to functions and goroutines
+// EXAMPLE 11 CONTEXT WITH HTTP GET
 
-func fetchThirdPartyStuffWhichCanBeSlow() (int, error) {
-	time.Sleep(time.Millisecond * 3000)
-
-	return 666, nil
+type result struct {
+	url     string
+	err     error
+	latency time.Duration
 }
 
-type Response struct {
-	value int
-	err   error
-}
+func get(ctx context.Context, url string, ch chan<- result) {
+	// INJECTING TIMEOUT IN THE HTTP GET REQUEST
+	start := time.Now()
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
-func fetchUserDate(ctx context.Context, userID int) (int, error) {
-	val := ctx.Value("foo")
-	fmt.Println("value from context: ", val)
-	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*2000) // timeout 2 seconds
-	defer cancel()
-
-	responseChannel := make(chan Response)
-
-	go func() {
-		val, err := fetchThirdPartyStuffWhichCanBeSlow()
-		responseChannel <- Response{val, err}
-	}()
-
-	for {
-		select {
-		// Done is called when timeout is triggered
-		case <-ctx.Done():
-			return 0, fmt.Errorf("api took too long")
-		case res := <-responseChannel:
-			return res.value, res.err
-		}
+	if resp, err := http.DefaultClient.Do(req); err != nil {
+		ch <- result{url, err, 0}
+	} else {
+		t := time.Since(start).Round(time.Millisecond)
+		ch <- result{url, nil, t}
+		resp.Body.Close()
 	}
 }
 
 func main() {
-	start := time.Now()
-	// ctx := context.Background()
-	ctx := context.WithValue(context.Background(), "foo", "bar") // storing key value data in context
-	userID := 10
-	val, err := fetchUserDate(ctx, userID)
-
-	if err != nil {
-		log.Fatal(err)
+	results := make(chan result)
+	list := []string{
+		"https://amazon.com",
+		"https://google.com",
+		"https://nytimes.com",
+		"https://youtube.com",
+		"http://localhost:8000",
 	}
-	fmt.Println("result: ", val)
-	fmt.Println("took", time.Since(start))
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	for _, url := range list {
+		go get(ctx, url, results)
+	}
+
+	for range list {
+		r := <-results
+
+		if r.err != nil {
+			log.Printf("%-20s %s\n", r.url, r.err)
+		} else {
+			log.Printf("%-20s %s\n", r.url, r.latency)
+		}
+	}
 }
+
+// EXAMPLE 10 CONTEXT [******************]
+
+// func slowFetching(ctx context.Context) (int, error) {
+// 	responseChannel := make(chan int)
+// 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*2000)
+// 	defer cancel()
+
+// 	go func() {
+// 		time.Sleep(time.Millisecond * 2500)
+// 		responseChannel <- 201
+// 	}()
+
+// 	select {
+// 	case <-ctx.Done():
+// 		return 0, fmt.Errorf("Slow api")
+// 	case r := <-responseChannel:
+// 		return r, nil
+// 	}
+// }
+
+// func main() {
+// 	ctx := context.Background()
+// 	value, err := slowFetching(ctx)
+
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	fmt.Println("value", value)
+// }
+
+// 💎 EXAMPLE 09 CONTEXT
+// 🤷 The context package in Golang provides a way to pass cancellation signals and deadlines to functions and goroutines
+
+// func fetchThirdPartyStuffWhichCanBeSlow() (int, error) {
+// 	time.Sleep(time.Millisecond * 3000)
+
+// 	return 200, nil
+// }
+
+// type Response struct {
+// 	value int
+// 	err   error
+// }
+
+// func fetchUserDate(ctx context.Context, userID int) (int, error) {
+// 	val := ctx.Value("foo")
+// 	fmt.Println("value from context: ", val)
+// 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*2000) // timeout 2 seconds
+// 	defer cancel()
+
+// 	responseChannel := make(chan Response)
+
+// 	go func() {
+// 		val, err := fetchThirdPartyStuffWhichCanBeSlow()
+// 		responseChannel <- Response{val, err}
+// 	}()
+
+// 	for {
+// 		select {
+// 		// Done is called when timeout is triggered
+// 		case <-ctx.Done():
+// 			return 0, fmt.Errorf("api took too long")
+// 		case res := <-responseChannel:
+// 			return res.value, res.err
+// 		}
+// 	}
+// }
+
+// func main() {
+// 	start := time.Now()
+// 	// ctx := context.Background()
+// 	ctx := context.WithValue(context.Background(), "foo", "bar") // storing key value data in context
+// 	userID := 10
+// 	val, err := fetchUserDate(ctx, userID)
+
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	fmt.Println("result: ", val)
+// 	fmt.Println("took", time.Since(start))
+// }
 
 // EXAMPLE 08 SELECT || PERIODIC TASKS
 
