@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -46,7 +44,7 @@ import (
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 				defer cancel()
 
-     	GO-ROUTINES KEEP POINTERS TO THE SHARED CHANNELS, IF THE CHANNELS ARE NOT CLOSED IT LEADS TO GO-ROUTINE LEAKS.
+     	!GO-ROUTINES KEEP POINTERS TO THE SHARED CHANNELS, IF THE CHANNELS ARE NOT CLOSED IT LEADS TO GO-ROUTINE LEAKS.
 	💎💎💎💎💎💎💎💎💎
 */
 
@@ -80,36 +78,67 @@ WE CAN ALSO PROMOTE INTERFACE WITHIN A STRUCT
 // 2. Channels provide a safe way for goroutines to communicate and synchronize their execution.
 // 3. You can send data into a channel from one goroutine and receive it in another.
 
-// ?EXAMPLE 12 RACE CONDITION
-
-var arr = make([]int, 5)
-
-func do(i int, ch chan<- *int) {
-	ch <- &i
-	fmt.Println("more++")
-	i += 100 //! UNSAFE (Read Modify Write Cycle)
-}
+// ?EXAMPLE 13 (We can loop over closed buffered channel)
 
 func main() {
-	// ch := make(chan *int, 5)
-	ch := make(chan *int)
-	// stopper := time.After(time.Second * 1)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
+	fmt.Println("start")
 
-	for i := 0; i < 5; i++ {
-		go do(i, ch)
-	}
+	chars := []string{"a", "b", "c"}
+	charChannel := make(chan string, 3)
 
+	go func() {
+		for _, char := range chars {
+			time.Sleep(time.Second * 1)
+			charChannel <- char
+		}
+		close(charChannel)
+		// charChannel <- "Haha" //! panic: send on closed channel
+	}()
+
+loop:
 	for {
 		select {
-		case <-ctx.Done():
-			log.Fatal("exit")
-		case v := <-ch:
-			fmt.Println("value", *v)
+		case c, ok := <-charChannel:
+			if !ok {
+				break loop
+			}
+			fmt.Println("value", c, ok)
 		}
 	}
+
+	fmt.Println("end")
 }
+
+// ?EXAMPLE 12 RACE CONDITION
+
+// var arr = make([]int, 5)
+
+// func do(i int, ch chan<- *int) {
+// 	ch <- &i
+// 	fmt.Println("more++")
+// 	i += 100 //! UNSAFE (Read Modify Write Cycle)
+// }
+
+// func main() {
+// 	// ch := make(chan *int, 5)
+// 	ch := make(chan *int)
+// 	// stopper := time.After(time.Second * 1)
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+// 	defer cancel()
+
+// 	for i := 0; i < 5; i++ {
+// 		go do(i, ch)
+// 	}
+
+// 	for {
+// 		select {
+// 		case <-ctx.Done():
+// 			log.Fatal("exit")
+// 		case v := <-ch:
+// 			fmt.Println("value", *v)
+// 		}
+// 	}
+// }
 
 // ?EXAMPLE 11 CONTEXT WITH HTTP GET
 
